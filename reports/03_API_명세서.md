@@ -59,7 +59,7 @@
 ```
 증빙: `evidence/05_web_api/model_switch_E3_api_db.png` (2990.65ms = cold start, 모델 로딩 포함)
 
-**성공 응답 — 같은 이미지 재요청 (캐시 HIT, `healthy_test.20.jpg`, E0 운영 시점)**
+**성공 응답 — 같은 이미지 재요청 (캐시 HIT, `healthy_test.20.jpg`, E1 운영 시점)**
 
 ```json
 {
@@ -118,7 +118,7 @@
 | `done` | 완료 | 결과 | `null` |
 | `failed` | 실패 | `null` | 실패 원인 |
 
-**완료 응답 — 캐시 MISS로 worker가 직접 추론 (job 2, E0 운영 시점)**
+**완료 응답 — 캐시 MISS로 worker가 직접 추론 (job 2, E1 운영 시점)**
 
 ```json
 {
@@ -157,7 +157,7 @@
 | 검증 ID | 테스트 입력 | 기대 | 실제 | 증빙 |
 |---|---|---|---|---|
 | API-01-T01 | `GET /health` | 200 `{"status":"ok"}` | 200 `{"status":"ok"}` (content-length 15) | `health.png` |
-| API-02-T01 | 콩잎 3클래스 각 1장 (01, E0) | 200 / 3클래스 라벨 | 200 / 3장 모두 정답 | `api_sync_after_*.png` |
+| API-02-T01 | 콩잎 3클래스 각 1장 (01, E1) | 200 / 3클래스 라벨 | 200 / 3장 모두 정답 | `api_sync_after_*.png` |
 | API-02-T02 | 같은 이미지 2회 | MISS → HIT | `false` → `true`, `inference_ms` 33.59 → `null` | `redis_cache_miss_hit_ttl.png` |
 | API-02-T03 | `.txt` | 400 | 400 | `api_sync_errors.png` |
 | API-02-T04 | 6MB 파일 | 413 | 413 | `api_sync_errors.png` |

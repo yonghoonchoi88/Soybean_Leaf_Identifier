@@ -10,7 +10,7 @@
   빨간 곳 = 그 클래스라고 판단하는 데 크게 기여한 영역
 
 사용 예:
-  # E3의 Test·Val 오답 전부 + 같은 사진을 E0는 어떻게 봤는지 비교
+  # E3의 Test·Val 오답 전부 + 같은 사진을 E1는 어떻게 봤는지 비교
   python scripts/gradcam.py --model artifacts/beans_resnet18_full_aug \
       --from-eval reports/data/eval_test_E3_full_aug.json reports/data/eval_val_E3_full_aug.json \
       --compare-model artifacts/beans_resnet18
@@ -123,7 +123,7 @@ def load_targets(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="artifacts/beans_resnet18_full_aug")
-    parser.add_argument("--compare-model", default=None, help="같은 사진을 비교할 모델 (예: E0)")
+    parser.add_argument("--compare-model", default=None, help="같은 사진을 비교할 모델 (예: E1)")
     parser.add_argument("--from-eval", nargs="*", help="evaluate_split.py 결과 JSON (오답 사진 자동 선택)")
     parser.add_argument("--images", nargs="*", help="직접 지정할 사진 경로")
     parser.add_argument("--data", default="dataset")

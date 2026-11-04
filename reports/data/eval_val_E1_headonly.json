@@ -2,7 +2,7 @@
   "created_at": "2026-11-04T15:12:37",
   "model": "artifacts/beans_resnet18",
   "split": "val",
-  "tag": "E0_headonly",
+  "tag": "E1_headonly",
   "device": "cpu",
   "images": 133,
   "correct": 102,

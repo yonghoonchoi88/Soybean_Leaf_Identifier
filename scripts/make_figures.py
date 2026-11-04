@@ -2,7 +2,7 @@
 
 사용: python scripts/make_figures.py   (저장소 루트에서)
 출력: reports/figures/pipeline.png, dashboard.png(모델), service.png(서비스), val_vs_test.png, error_types.png, latency.png,
-      confusion_E0_E3.png, training_curves.png
+      confusion_E1_E3.png, training_curves.png
 """
 import csv
 import json
@@ -29,11 +29,11 @@ for name in ("Noto Sans CJK KR", "NanumGothic", "Malgun Gothic", "AppleGothic"):
 plt.rcParams["axes.unicode_minus"] = False
 SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8a8984", "#e6e5e1"
 CARD = "#f3f2ee"
-EXP = {"E0": "#2a78d6", "E2": "#eb6834", "E3": "#1baf7a"}          # 실험 = 범주색 1~3번 고정
-EXP_NAME = {"E0": "E0 Head-only", "E2": "E2 Full", "E3": "E3 Full+증강"}
-EXP_DESC = {"E0": "헤드만 학습", "E2": "전체 층 · lr↓", "E3": "+ 반전·회전·밝기"}
+EXP = {"E1": "#2a78d6", "E2": "#eb6834", "E3": "#1baf7a"}          # 실험 = 범주색 1~3번 고정
+EXP_NAME = {"E1": "E1 Head-only", "E2": "E2 Full", "E3": "E3 Full+증강"}
+EXP_DESC = {"E1": "헤드만 학습", "E2": "전체 층 · lr↓", "E3": "+ 반전·회전·밝기"}
 STATUS = {"miss": "#d03b3b", "false_alarm": "#fab219", "confuse": "#a8a7a1"}
-TAGS = {"E0": "E0_headonly", "E2": "E2_full", "E3": "E3_full_aug"}
+TAGS = {"E1": "E1_headonly", "E2": "E2_full", "E3": "E3_full_aug"}
 CLASSES = ["angular_leaf_spot", "bean_rust", "healthy"]
 SHORT = {"angular_leaf_spot": "반점병\nangular", "bean_rust": "녹병\nbean_rust", "healthy": "정상\nhealthy"}
 
@@ -227,7 +227,7 @@ def dashboard():
     """① 모델 결과 보드 — 학습·선택·평가만 (서비스 검증은 service_board)"""
     W, H = 13, 13.5
     fig = plt.figure(figsize=(W, H), dpi=150, facecolor=SURFACE)
-    t3, v0, v3 = ev["test"]["E3"], ev["val"]["E0"], ev["val"]["E3"]
+    t3, v0, v3 = ev["test"]["E3"], ev["val"]["E1"], ev["val"]["E3"]
     fig.text(0.045, 0.958, "콩잎 질병 분류 · 모델 결과 한눈에 보기", fontsize=26, color=INK, fontweight="bold")
     fig.text(0.045, 0.932, "ResNet-18 Fine-tuning  ·  콩잎 1,295장(학습 1,034 / 검증 133 / 테스트 128)  ·  3클래스  ·  "
              "Validation으로 선택 → 선택된 E3를 Test로 최종 평가", fontsize=12, color=INK2)
@@ -247,7 +247,7 @@ def dashboard():
     fig.add_artist(plt.Line2D([0.045, 0.955], [0.77, 0.77], color=GRID, linewidth=1))
 
     section(fig, 0.045, 0.745, "①", "모델 선택 → 최종 평가",
-            "E0→E2: Backbone까지 학습(lr 0.00005) · E2→E3: Train 증강 추가 → Val로 E3 선택")
+            "E1→E2: Backbone까지 학습(lr 0.00005) · E2→E3: Train 증강 추가 → Val로 E3 선택")
     chart_val_test(fig.add_axes([0.07, 0.53, 0.39, 0.165]))
     section(fig, 0.53, 0.745, "②", "오류 유형 (Validation)", f"가장 위험한 '병을 놓침'이 {miss0} → {miss3}")
     chart_error_types(fig.add_axes([0.66, 0.53, 0.29, 0.165]))
@@ -268,8 +268,8 @@ def dashboard():
                  color="#0ca30c" if tag == "예상됨" else MUTED, transform=box.transAxes)
         box.text(x0, 0.14, body, fontsize=10.5, color=INK2, transform=box.transAxes)
 
-    section(fig, 0.045, 0.345, "③", "혼동행렬", "행=정답·열=예측 · E0: 질병 혼동+정상으로 놓침 → E3: 주로 녹병→반점병")
-    chart_confusion(fig.add_axes([0.075, 0.07, 0.19, 0.23]), v0, f"E0 · Validation {v0['correct']}/133")
+    section(fig, 0.045, 0.345, "③", "혼동행렬", "행=정답·열=예측 · E1: 질병 혼동+정상으로 놓침 → E3: 주로 녹병→반점병")
+    chart_confusion(fig.add_axes([0.075, 0.07, 0.19, 0.23]), v0, f"E1 · Validation {v0['correct']}/133")
     ax_r = fig.add_axes([0.285, 0.07, 0.19, 0.23])
     chart_confusion(ax_r, t3, f"E3 · 최종 Test {t3['correct']}/128")
     ax_r.set_yticks([])
@@ -334,7 +334,7 @@ def service_board():
             ("Redis 정지 · 동기", "200 · 캐시 없이 추론 (응답 8.06초 지연 → 개선안으로 제안)"),
             ("Redis 정지 · 비동기", "503 · image_jobs에 failed와 오류 메시지 기록 (20.67초)"),
             ("Redis 복구", "worker 자동 재연결 · 새 작업 done"),
-            ("모델 교체 E0 → E3", ".env 변경 → web·worker 재생성 · 응답·DB의 model_id 모두 E3"),
+            ("모델 교체 E1 → E3", ".env 변경 → web·worker 재생성 · 응답·DB의 model_id 모두 E3"),
             ("모의 테스트", "pytest 4 passed · 전체 흐름 · 브로커 오류 503 · 캐시 · worker 실패 기록")]
     for i, (h, b) in enumerate(rows):
         y = 0.218 - i * 0.031
@@ -348,7 +348,7 @@ def service_board():
         fig.text(0.29, y, b, fontsize=11, color=INK2)
 
     fig.text(0.045, 0.014, "출처: reports/07_기능테스트_오류분석.md · reports/data/timings.csv · "
-             "reports/evidence/ (04_sync_api_01 · 05_web_api · 08_failure_test)  ·  웹 화면 3장은 서비스 모델 교체(E3) 전 E0로 촬영",
+             "reports/evidence/ (04_sync_api_01 · 05_web_api · 08_failure_test)  ·  웹 화면 3장은 서비스 모델 교체(E3) 전 E1로 촬영",
              fontsize=9.5, color=MUTED)
     fig.savefig(FIG / "service.png", facecolor=SURFACE)
     plt.close(fig)
@@ -365,7 +365,7 @@ def pipeline():
     bg.add_patch(FancyBboxPatch((0.01, 0.03), 0.98, 0.94, boxstyle="round,pad=0,rounding_size=0.03",
                                 facecolor="#f3f2ee", edgecolor="none"))
     boxes = [("데이터", "콩잎 사진 1,295장", "3클래스 · 중복·누출 0", "#8a8984"),
-             ("① 모델 · ResNet-18", "Head-only → Full → +증강", "Val 0.767 → 0.993 · Test 0.953", EXP["E0"]),
+             ("① 모델 · ResNet-18", "Head-only → Full → +증강", "Val 0.767 → 0.993 · Test 0.953", EXP["E1"]),
              ("② 서비스 · FastAPI", "동기 · 비동기 · 캐시 · DB", "캐시 −91% · 테스트 27/27", EXP["E2"]),
              ("오답 분석", "Grad-CAM · OpenCV HSV", "녹병↔반점병 혼동 확인", EXP["E3"])]
     bw, gap, x0, y0, bh = 0.2, 0.045, 0.04, 0.42, 0.45
@@ -400,18 +400,18 @@ def pipeline():
 if __name__ == "__main__":
     FIG.mkdir(parents=True, exist_ok=True)
     save_single("val_vs_test.png", chart_val_test, title="모델 선택(Validation) → 최종 평가(Test 1회)",
-                note="E0·E2·E3는 Validation으로 비교·선택, 최종 평가는 선택된 E3")
+                note="E1·E2·E3는 Validation으로 비교·선택, 최종 평가는 선택된 E3")
     save_single("error_types.png", chart_error_types, title="Validation 오류 유형 (133장)")
     save_single("latency.png", chart_latency, title="응답 시간 비교 (E3 서비스 · Docker CPU · 조건별 5회)",
                 note="비동기 완료 시간은 상태 조회 간격 0.1초 기준 (브라우저 화면은 1초 간격)")
     save_single("training_curves.png", chart_curves, title="Epoch별 Validation 정확도")
     fig, axes = plt.subplots(1, 3, figsize=(12.5, 4.3), dpi=150, facecolor=SURFACE)
-    chart_confusion(axes[0], ev["val"]["E0"], f"E0 · Validation {ev['val']['E0']['correct']}/133")
+    chart_confusion(axes[0], ev["val"]["E1"], f"E1 · Validation {ev['val']['E1']['correct']}/133")
     chart_confusion(axes[1], ev["val"]["E3"], f"E3 · Validation {ev['val']['E3']['correct']}/133")
     chart_confusion(axes[2], ev["test"]["E3"], f"E3 · 최종 Test {ev['test']['E3']['correct']}/128")
     fig.suptitle("혼동행렬 (빨간 숫자 = 병든 잎을 healthy로 놓침)", x=0.02, ha="left", fontsize=13, fontweight="bold")
     fig.tight_layout(rect=(0, 0, 1, 0.93))
-    fig.savefig(FIG / "confusion_E0_E3.png", facecolor=SURFACE, bbox_inches="tight", pad_inches=0.15)
+    fig.savefig(FIG / "confusion_E1_E3.png", facecolor=SURFACE, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     dashboard()
     service_board()

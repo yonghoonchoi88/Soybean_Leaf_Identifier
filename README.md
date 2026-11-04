@@ -47,20 +47,20 @@
 
 | 실험 | 바꾼 것 | 학습되는 부분 | 학습률 | Train 증강 | Validation |
 |---|---|---|---:|---|---:|
-| **E0** Head-only (필수) | 제공 명령 그대로 (`--freeze-backbone`) | 마지막 분류 헤드만 (1,539개) | 0.0002 | 없음 (제공 코드에 증강 기능 없음) | 0.767 |
+| **E1** Head-only (필수) | 제공 명령 그대로 (`--freeze-backbone`) | 마지막 분류 헤드만 (1,539개) | 0.0002 | 없음 (제공 코드에 증강 기능 없음) | 0.767 |
 | **E2** Full Fine-tuning | 동결 해제 + 학습률 ¼ (가이드 6-1 B 설정) | **Backbone 포함 전체** (약 1,118만 개) | 0.00005 | 없음 (Full 효과만 보려고 뺌) | 0.970 |
 | **E3** Full + 증강 ⭐ | E2에 **Train 증강만** 추가 | 전체 | 0.00005 | 좌우 반전(50%) · 회전 ±20° · 밝기·대비 ±20% | **0.993** |
 
-- **Full Fine-tuning:** E0는 ImageNet에서 배운 "눈"(Backbone)을 고정하고 마지막 층만 학습했다. E2는 Backbone까지 콩잎 병반에 맞게 다시 학습하고, 사전학습 특징이 망가지지 않도록 학습률을 낮췄다.
+- **Full Fine-tuning:** E1는 ImageNet에서 배운 "눈"(Backbone)을 고정하고 마지막 층만 학습했다. E2는 Backbone까지 콩잎 병반에 맞게 다시 학습하고, 사전학습 특징이 망가지지 않도록 학습률을 낮췄다.
 - **증강:** 학습할 때마다 Train 사진을 무작위로 뒤집고·돌리고·밝기를 바꿔 촬영 방향·조명 차이에 강하게 만든다. 녹병(적갈색)과 반점병(황갈색)은 색이 단서라 **색조·채도는 바꾸지 않았다.** Validation·Test에는 적용하지 않는다.
 - 공통: epochs 3 · batch 8 · 같은 Train/Validation · `training/finetune.py` 미수정 (E3는 래퍼 `training/finetune_aug.py`)
-- 실험 ID: 실험은 **E0 → E2 → E3 세 개**다 (E1은 사용하지 않은 번호). 학습 로그 파일 이름의 `e3`(`train_full_e3.log` 등)는 실험 E3가 아니라 **epochs 3**을 뜻한다.
+- 실험 ID: 실험은 **E1 → E2 → E3 세 개**다. 기준선은 작업 당시 **E0**로 불렀다가 문서 정리 때 E1로 바꿨다. 수치는 그대로이며, 그 시점의 평가 화면 캡처(`eval_val_E1.png` 등)에는 `--tag E0_headonly`와 저장 파일 이름 `eval_val_E0_headonly.json` 등이 찍혀 있다 (현재 파일 이름은 `E1_headonly`). 학습 로그 파일 이름의 `e3`(`train_full_e3.log` 등)는 실험 E3가 아니라 **epochs 3**을 뜻한다.
 
 ## 산출물
 
 | # | 문서 | 핵심 |
 |---:|---|---|
-| 1 | [Fine-tuning 결과보고서](reports/01_FineTuning_결과보고서.md) | 데이터 점검 · E0/E2/E3 · Val 선택 · Test 1회 · 모델 교체 |
+| 1 | [Fine-tuning 결과보고서](reports/01_FineTuning_결과보고서.md) | 데이터 점검 · E1/E2/E3 · Val 선택 · Test 1회 · 모델 교체 |
 | 2 | [시스템 아키텍처](reports/02_시스템_아키텍처.md) | Docker Compose 4서비스 · Redis DB1/2/3 역할 |
 | 3 | [API 명세서](reports/03_API_명세서.md) | 6개 API · 실제 응답 JSON · 400/413/404/503 |
 | 4 | [DB 구조 · 작업이력](reports/04_DB_구조_작업이력.md) | DDL · 상태 전이 · job 1~21 (`failed` 포함) |
@@ -97,7 +97,7 @@ mkdir -p artifacts media/jobs
 docker compose up -d --build
 curl -s http://127.0.0.1:8000/health ; echo             # 화면: /vision/sync/ · /vision/async/ · /docs
 # 확인: /health → {"status":"ok"} · 동기 → top1·cache_hit · 비동기 → 202·job_id → done · DB image_jobs 행
-# 가이드 기본 경로(E0)로 전환: sed -i 's#^MODEL_PATH=.*#MODEL_PATH=artifacts/beans_resnet18#' .env && docker compose up -d --force-recreate web worker
+# 가이드 기본 경로(E1)로 전환: sed -i 's#^MODEL_PATH=.*#MODEL_PATH=artifacts/beans_resnet18#' .env && docker compose up -d --force-recreate web worker
 docker compose stop                                      # 정지 (down -v 는 DB·캐시를 지우므로 사용 안 함)
 
 # 5. 테스트 · 분석

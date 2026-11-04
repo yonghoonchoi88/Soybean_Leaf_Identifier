@@ -14,7 +14,7 @@
 규칙 (보조 판단: 라벨을 바꾸지 않고 "확인 필요" 표시만 붙임)
   R1 healthy 의심 : 예측이 healthy 인데 lesion_ratio > T1
                     T1 = Validation 에서 "healthy를 맞힌 사진"의 lesion_ratio 95백분위 (정상 잎의 5%만 표시되도록)
-  R2 저신뢰       : 1·2위 점수 차(margin) < M  (M = 0.4, E0 Validation margin 분석에서 0.4 이상 구간 정확도 97.6%)
+  R2 저신뢰       : 1·2위 점수 차(margin) < M  (M = 0.4, E1 Validation margin 분석에서 0.4 이상 구간 정확도 97.6%)
   R1 ∪ R2        : 둘 중 하나라도 해당하면 확인 필요
 
 사용 예:
