@@ -15,20 +15,31 @@
   <img src="reports/figures/pipeline.png" alt="파이프라인" width="100%">
 </p>
 
-| | ① 모델 | ② 서비스 |
-|---|---|---|
-| **한 일** | 데이터 점검 → Head-only 기준선 → Full Fine-tuning · 증강 실험 → Val 선택 → Test 1회 → 오답 분석 | 동기 API + Redis 캐시 · Celery 비동기 · PostgreSQL 기록 · 모델 교체 · 장애 테스트 |
-| **핵심 숫자** | Val **0.767 → 0.993** · 최종 Test **0.953** · 병든 잎 놓침 Val **11 → 1**, Test **0** | 캐시 HIT **−91%** · 비동기 접수 **9.1 ms** · 실환경 테스트 **27 / 27 PASS** |
-| **기록** | [산출물 1](reports/01_FineTuning_결과보고서.md) · [산출물 8](reports/08_최종기술보고서.md) | [산출물 2~7](#산출물) · [기능 테스트](reports/07_기능테스트_오류분석.md) |
-
 <table>
   <tr>
-    <td width="50%" align="center" valign="middle"><img src="reports/figures/dashboard.png" alt="모델 결과 한눈에 보기"></td>
-    <td width="50%" align="center" valign="middle"><img src="reports/figures/service.png" alt="서비스 검증 한눈에 보기"></td>
+    <th width="10%"></th>
+    <th width="45%">① 모델</th>
+    <th width="45%">② 서비스</th>
   </tr>
   <tr>
-    <td align="center">① 모델 · 선택 · 최종 평가 · 오류 유형</td>
-    <td align="center">② 서비스 · 웹 화면 · 응답 시간 · API·장애 테스트</td>
+    <td align="center"><b>한 일</b></td>
+    <td>데이터 점검 → Head-only 기준선 → Full Fine-tuning · 증강 실험 → Val 선택 → Test 1회 → 오답 분석</td>
+    <td>동기 API + Redis 캐시 · Celery 비동기 · PostgreSQL 기록 · 모델 교체 · 장애 테스트</td>
+  </tr>
+  <tr>
+    <td align="center"><b>핵심 숫자</b></td>
+    <td>Val <b>0.767 → 0.993</b> · 최종 Test <b>0.953</b> · 병든 잎 놓침 Val <b>11 → 1</b>, Test <b>0</b></td>
+    <td>캐시 HIT <b>−91%</b> · 비동기 접수 <b>9.1 ms</b> · 실환경 테스트 <b>27 / 27 PASS</b></td>
+  </tr>
+  <tr>
+    <td align="center"><b>기록</b></td>
+    <td><a href="reports/01_FineTuning_결과보고서.md">산출물 1</a> · <a href="reports/08_최종기술보고서.md">산출물 8</a></td>
+    <td><a href="#산출물">산출물 2~7</a> · <a href="reports/07_기능테스트_오류분석.md">기능 테스트</a></td>
+  </tr>
+  <tr>
+    <td align="center"><b>한눈에</b></td>
+    <td align="center" valign="top"><img src="reports/figures/dashboard.png" alt="모델 결과 한눈에 보기"><br>모델 선택 · 최종 평가 · 오류 유형</td>
+    <td align="center" valign="top"><img src="reports/figures/service.png" alt="서비스 검증 한눈에 보기"><br>웹 화면 · 응답 시간 · API·장애 테스트</td>
   </tr>
 </table>
 
