@@ -99,6 +99,7 @@
 | E2 | 선택 | `--freeze-backbone` 제거, lr 0.00005 | E0 | 전체 층 학습 효과 |
 | E3 | 선택 | E2와 동일 + **Train 이미지 증강** | E2 | 증강 효과 |
 
+- 실험 ID는 E0 · E2 · E3 세 개다 (E1은 사용하지 않은 번호).
 - E2 옵션은 평가 가이드 6-1 B의 샘플 실행 옵션과 같다 (epochs 3, batch 8, lr 0.00005).
 - E0 → E2는 **동결 해제와 학습률 변경(0.0002 → 0.00005)을 한 묶음**으로 바꿨다(가이드 B 설정). 두 효과를 따로 분리하지 않았으므로 E2의 향상은 "Full Fine-tuning 설정"의 효과로 해석한다. E2 → E3는 **증강 하나만** 바꿨다.
 - 학습률을 낮춘 이유: Full Fine-tuning은 ImageNet으로 이미 학습된 Backbone까지 고치므로, 큰 학습률은 사전학습 특징을 망가뜨릴 수 있다.
@@ -150,7 +151,7 @@ time python -u -m training.finetune --data dataset --output artifacts/beans_resn
 time python -u -m training.finetune_aug --data dataset --output artifacts/beans_resnet18_full_aug \
   --epochs 3 --batch-size 8 --lr 0.00005 2>&1 | tee reports/evidence/train_full_aug_e3.log
 ```
-(로그 파일은 이후 `reports/evidence/02_training/`으로 정리)
+(로그 파일은 이후 `reports/evidence/02_training/`으로 정리. 파일 이름의 `e3`는 실험 E3가 아니라 **epochs 3** 표기 — `train_full_e3.log`는 E2의 로그)
 
 ---
 
