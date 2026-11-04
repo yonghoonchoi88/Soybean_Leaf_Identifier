@@ -66,12 +66,12 @@
 | 1 | [Fine-tuning 결과보고서](reports/01_FineTuning_결과보고서.md) | 데이터 점검 · E1/E2/E3 · Val 선택 · Test 1회 · 모델 교체 |
 | 2 | [시스템 아키텍처](reports/02_시스템_아키텍처.md) | Docker Compose 4서비스 · Redis DB1/2/3 역할 |
 | 3 | [API 명세서](reports/03_API_명세서.md) | 6개 API · 실제 응답 JSON · 400/413/404/503 |
-| 4 | [DB 구조 · 작업이력](reports/04_DB_구조_작업이력.md) | DDL · 상태 전이 · job 1~21 (`failed` 포함) |
+| 4 | [DB 구조 · 작업이력](reports/04_DB_구조_작업이력.md) | DDL · 상태 전이 · job 1\~21 (`failed` 포함) |
 | 5 | [AI 버튼 처리흐름](reports/05_AI버튼_처리흐름.md) | 동기·비동기 처리 흐름도 (파일·함수·줄 번호) · 코드 연결표 |
 | 6 | [성능 비교](reports/06_성능비교_보고서.md) | `timings.csv` · 캐시·비동기 해석 |
 | 7 | [기능 테스트 · 오류](reports/07_기능테스트_오류분석.md) | 실환경 27건 · 모의 2건 · 오류 12건 |
-| 8 | [**최종 기술 보고서**](reports/08_최종기술보고서.md) | 종합 · 개선 기술 ①~④ · 한계 · 개선 제안 |
-| 9 | [성능 분석 · 개선 보고서](reports/09_성능분석_개선보고서.md) | 문제 P1~P5 → 원인 → 개선 → 재검증 |
+| 8 | [**최종 기술 보고서**](reports/08_최종기술보고서.md) | 종합 · 개선 기술 ①\~④ · 한계 · 개선 제안 |
+| 9 | [성능 분석 · 개선 보고서](reports/09_성능분석_개선보고서.md) | 문제 P1\~P5 → 원인 → 개선 → 재검증 |
 
 <details>
 <summary><b>빠른 실행</b> — 데이터 배치 → 학습 → <code>docker compose up</code> (데이터·모델·<code>.env</code>는 저장소에 없음)</summary>

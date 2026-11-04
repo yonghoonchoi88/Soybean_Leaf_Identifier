@@ -186,7 +186,7 @@ time python -u -m training.finetune_aug --data dataset --output artifacts/beans_
 |---|---|---:|---:|---:|
 | 질병 → healthy (병을 놓침) | 🔴 높음 (방제 시기 놓침) | **11** | 2 | **1** |
 | healthy → 질병 (오경보) | 🟡 중간 | 4 | 1 | 0 |
-| 질병 ↔ 질병 (병명 혼동) | 🔵 낮음~중간 | 16 | 1 | 0 |
+| 질병 ↔ 질병 (병명 혼동) | 🔵 낮음\~중간 | 16 | 1 | 0 |
 | **합계** | | 31 | 4 | 1 |
 
 ### 6-2. 클래스별 지표 (Validation)
