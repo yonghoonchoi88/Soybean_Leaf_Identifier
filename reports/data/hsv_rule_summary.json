@@ -1,0 +1,134 @@
+{
+  "model_predictions": {
+    "val": "reports/data/eval_val_E3_full_aug_predictions.csv",
+    "test": "reports/data/eval_test_E3_full_aug_predictions.csv"
+  },
+  "hsv_ranges": {
+    "green": [
+      [
+        25,
+        25,
+        35
+      ],
+      [
+        95,
+        255,
+        255
+      ]
+    ],
+    "brown": [
+      [
+        5,
+        60,
+        40
+      ],
+      [
+        24,
+        255,
+        235
+      ]
+    ]
+  },
+  "class_stats_val": {
+    "angular_leaf_spot": {
+      "n": 44,
+      "lesion_ratio_p25": 0.0084,
+      "lesion_ratio_median": 0.0154,
+      "lesion_ratio_p75": 0.0296,
+      "lesion_hue_median": 20.0
+    },
+    "bean_rust": {
+      "n": 45,
+      "lesion_ratio_p25": 0.0032,
+      "lesion_ratio_median": 0.0067,
+      "lesion_ratio_p75": 0.0186,
+      "lesion_hue_median": 19.0
+    },
+    "healthy": {
+      "n": 44,
+      "lesion_ratio_p25": 0.002,
+      "lesion_ratio_median": 0.0068,
+      "lesion_ratio_p75": 0.0148,
+      "lesion_hue_median": 20.0
+    }
+  },
+  "class_stats_test": {
+    "angular_leaf_spot": {
+      "n": 43,
+      "lesion_ratio_p25": 0.0161,
+      "lesion_ratio_median": 0.0233,
+      "lesion_ratio_p75": 0.0398,
+      "lesion_hue_median": 20.0
+    },
+    "bean_rust": {
+      "n": 43,
+      "lesion_ratio_p25": 0.0054,
+      "lesion_ratio_median": 0.0115,
+      "lesion_ratio_p75": 0.0189,
+      "lesion_hue_median": 20.0
+    },
+    "healthy": {
+      "n": 42,
+      "lesion_ratio_p25": 0.0029,
+      "lesion_ratio_median": 0.0051,
+      "lesion_ratio_p75": 0.0132,
+      "lesion_hue_median": 18.5
+    }
+  },
+  "thresholds_from_val": {
+    "T1_lesion_ratio": 0.0249,
+    "M_margin": 0.4
+  },
+  "rules_val(design)": {
+    "R1": {
+      "flagged": 3,
+      "flag_rate": 0.0226,
+      "errors_total": 1,
+      "errors_caught": 0,
+      "auto_accuracy": 0.9923,
+      "auto_count": 130
+    },
+    "R2": {
+      "flagged": 4,
+      "flag_rate": 0.0301,
+      "errors_total": 1,
+      "errors_caught": 0,
+      "auto_accuracy": 0.9922,
+      "auto_count": 129
+    },
+    "review": {
+      "flagged": 7,
+      "flag_rate": 0.0526,
+      "errors_total": 1,
+      "errors_caught": 0,
+      "auto_accuracy": 0.9921,
+      "auto_count": 126
+    }
+  },
+  "rules_test(apply once)": {
+    "R1": {
+      "flagged": 6,
+      "flag_rate": 0.0469,
+      "errors_total": 6,
+      "errors_caught": 0,
+      "auto_accuracy": 0.9508,
+      "auto_count": 122
+    },
+    "R2": {
+      "flagged": 5,
+      "flag_rate": 0.0391,
+      "errors_total": 6,
+      "errors_caught": 4,
+      "auto_accuracy": 0.9837,
+      "auto_count": 123
+    },
+    "review": {
+      "flagged": 11,
+      "flag_rate": 0.0859,
+      "errors_total": 6,
+      "errors_caught": 4,
+      "auto_accuracy": 0.9829,
+      "auto_count": 117
+    }
+  }
+}
