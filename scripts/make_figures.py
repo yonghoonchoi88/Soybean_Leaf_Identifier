@@ -1,7 +1,7 @@
 """reports/data 의 실제 결과 파일만 읽어서 README·산출물용 그림을 만든다. (숫자 수기 입력 없음)
 
 사용: python scripts/make_figures.py   (저장소 루트에서)
-출력: reports/figures/dashboard.png, val_vs_test.png, error_types.png, latency.png,
+출력: reports/figures/pipeline.png, dashboard.png(모델), service.png(서비스), val_vs_test.png, error_types.png, latency.png,
       confusion_E0_E3.png, training_curves.png
 """
 import csv
@@ -224,103 +224,178 @@ def image_ax(fig, rect, img, caption):
 
 
 def dashboard():
-    W, H = 13, 19.5
+    """① 모델 결과 보드 — 학습·선택·평가만 (서비스 검증은 service_board)"""
+    W, H = 13, 13.5
     fig = plt.figure(figsize=(W, H), dpi=150, facecolor=SURFACE)
     t3, v0, v3 = ev["test"]["E3"], ev["val"]["E0"], ev["val"]["E3"]
-    fig.text(0.045, 0.972, "콩잎 질병 분류 · 프로젝트 한눈에 보기", fontsize=26, color=INK, fontweight="bold")
-    fig.text(0.045, 0.956, f"ResNet-18 Fine-tuning  ·  콩잎 이미지 1,295장(학습 1,034 / 검증 133 / 테스트 128)  ·  "
-             "3클래스  ·  FastAPI · Redis · Celery · PostgreSQL · Docker Compose",
-             fontsize=12, color=INK2)
+    fig.text(0.045, 0.958, "콩잎 질병 분류 · 모델 결과 한눈에 보기", fontsize=26, color=INK, fontweight="bold")
+    fig.text(0.045, 0.932, "ResNet-18 Fine-tuning  ·  콩잎 1,295장(학습 1,034 / 검증 133 / 테스트 128)  ·  3클래스  ·  "
+             "Validation으로 선택 → 선택된 E3를 Test로 최종 평가", fontsize=12, color=INK2)
 
-    # 실물 헤더: 클래스별 실제 사진(E3 예측) + 실제 서비스 화면
-    feats = {r["file"]: r for r in csv.DictReader(open(DATA / "hsv_features_test.csv", encoding="utf-8"))}
-    heads = []
-    for c, ko in (("angular_leaf_spot", "반점병"), ("bean_rust", "녹병"), ("healthy", "정상")):
-        r = feats[f"{c}_test.0.jpg"]
-        heads.append((f"{c}_test.0", f"{ko} → E3 {float(r['top1_score']):.2f} {'정답' if r['correct'] == 'True' else '오답'}"))
-    for i, (stem, cap) in enumerate(heads):
-        p = Image.open(FIG / "hsv" / f"hsv_test_{stem}.png")
-        image_ax(fig, [0.045 + i * 0.158, 0.80, 0.148, 0.135], p.crop((0, 0, 256, 256)), cap)
-    shot = Image.open(EVI / "05_web_api" / "web_async_2_done.png")
-    shot = shot.crop((0, 0, shot.width, int(shot.width * 0.62)))
-    image_ax(fig, [0.53, 0.80, 0.425, 0.135], shot, "실제 서비스 화면 · 비동기 접수 → Celery 처리 → done")
-
-    # 핵심 숫자 4개
     acc = t3["accuracy"]
+    f1 = sum(c["f1"] for c in t3["per_class"].values()) / 3
     miss0, miss3, miss_t = error_types(v0)[0], error_types(v3)[0], error_types(t3)[0]
-    lat = {k: m for k, _, m in latency()}
-    cut = (lat["동기 MISS"] - lat["동기 HIT"]) / lat["동기 MISS"] * 100
-    r1v, r2v = hsv["rules_val(design)"]["R1"], hsv["rules_val(design)"]["R2"]
-    cw, ch, cy = 0.215, 0.072, 0.705
-    cards = [("최종 ·", "Test 정확도", f"{acc:.3f}", f"E3 · 모델 확정 후 1회 · 처음 보는 128장"),
-             ("선택 ·", "Validation 정확도", f"+{(v3['accuracy'] - v0['accuracy']) * 100:.1f}%p", f"{v0['accuracy']:.3f} → {v3['accuracy']:.3f} (Head-only → Full+증강)"),
+    conf_t = error_types(t3)[2]
+    cw, ch, cy = 0.215, 0.105, 0.79
+    cards = [("최종 ·", "Test 정확도", f"{acc:.3f}", f"E3 · 처음 보는 128장 · {t3['correct']}장 정답"),
+             ("선택 ·", "Validation 정확도", f"+{(v3['accuracy'] - v0['accuracy']) * 100:.1f}%p",
+              f"{v0['accuracy']:.3f} → {v3['accuracy']:.3f} (Head-only → Full+증강)"),
              ("안전 ·", "병든 잎 놓침", f"{miss0} → {miss3}", f"Validation 기준 · 최종 Test {miss_t}건"),
-             ("속도 ·", "캐시 HIT 응답", f"−{cut:.0f}%", f"동기 {lat['동기 MISS']:.1f} → {lat['동기 HIT']:.1f} ms (중앙값 5회)")]
+             ("균형 ·", "Test Macro-F1", f"{f1:.3f}", f"남은 오답 {conf_t}장 모두 질병 간 혼동")]
     for i, c in enumerate(cards):
         card(fig, 0.045 + i * (cw + 0.0133), cy, cw, ch, *c)
-    fig.add_artist(plt.Line2D([0.045, 0.955], [0.69, 0.69], color=GRID, linewidth=1))
+    fig.add_artist(plt.Line2D([0.045, 0.955], [0.77, 0.77], color=GRID, linewidth=1))
 
-    # ① 성능 변화 / ② 오류 유형
-    section(fig, 0.045, 0.672, "①", "모델 선택 → 최종 평가", "E0→E2: Backbone까지 학습(lr 0.00005) · E2→E3: Train 증강 추가 → Val로 E3 선택")
-    chart_val_test(fig.add_axes([0.07, 0.505, 0.39, 0.135]))
-    section(fig, 0.53, 0.672, "②", "오류 유형 (Validation)", f"가장 위험한 '병을 놓침'이 {miss0} → {miss3}")
-    chart_error_types(fig.add_axes([0.66, 0.505, 0.29, 0.135]))
+    section(fig, 0.045, 0.745, "①", "모델 선택 → 최종 평가",
+            "E0→E2: Backbone까지 학습(lr 0.00005) · E2→E3: Train 증강 추가 → Val로 E3 선택")
+    chart_val_test(fig.add_axes([0.07, 0.53, 0.39, 0.165]))
+    section(fig, 0.53, 0.745, "②", "오류 유형 (Validation)", f"가장 위험한 '병을 놓침'이 {miss0} → {miss3}")
+    chart_error_types(fig.add_axes([0.66, 0.53, 0.29, 0.165]))
 
-    # 해석 박스
-    box = fig.add_axes([0.045, 0.40, 0.91, 0.075])
+    box = fig.add_axes([0.045, 0.385, 0.91, 0.1])
     box.axis("off")
     box.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.03",
                                  transform=box.transAxes, facecolor=CARD, edgecolor="none"))
-    box.text(0.02, 0.78, "결과를 읽는 법", fontsize=14, color=INK, fontweight="bold", transform=box.transAxes)
+    box.text(0.02, 0.76, "결과를 읽는 법", fontsize=14, color=INK, fontweight="bold", transform=box.transAxes)
     notes = [("가. Test < Validation", "예상됨",
               f"Val은 epoch·모델 선택에 쓰여 낙관적 · {v3['accuracy']:.3f} → {acc:.3f}"),
              ("나. 증강 효과", "확정 안 함", f"Val +{v3['correct'] - ev['val']['E2']['correct']}장(선택 규칙 충족) · 시드 1개 1회 실행"),
              ("다. 작은 표본", "한계", "Val 1장 = 0.75%p · Test 1장 = 0.78%p")]
     for i, (h, tag, body) in enumerate(notes):
         x0 = 0.02 + i * 0.33
-        box.text(x0, 0.45, h, fontsize=12, color=INK, fontweight="bold", transform=box.transAxes)
-        box.text(x0 + 0.165, 0.45, tag, fontsize=10,
+        box.text(x0, 0.43, h, fontsize=12, color=INK, fontweight="bold", transform=box.transAxes)
+        box.text(x0 + 0.165, 0.43, tag, fontsize=10,
                  color="#0ca30c" if tag == "예상됨" else MUTED, transform=box.transAxes)
-        box.text(x0, 0.15, body, fontsize=10.5, color=INK2, transform=box.transAxes)
+        box.text(x0, 0.14, body, fontsize=10.5, color=INK2, transform=box.transAxes)
 
-    # ③ 혼동행렬 / ④ 응답시간
-    section(fig, 0.045, 0.375, "③", "혼동행렬", "행=정답·열=예측 · E0: 질병 혼동+정상으로 놓침 → E3: 주로 녹병→반점병")
-    chart_confusion(fig.add_axes([0.075, 0.21, 0.19, 0.125]), v0, f"E0 · Validation {v0['correct']}/133")
-    ax_r = fig.add_axes([0.285, 0.21, 0.19, 0.125])
+    section(fig, 0.045, 0.345, "③", "혼동행렬", "행=정답·열=예측 · E0: 질병 혼동+정상으로 놓침 → E3: 주로 녹병→반점병")
+    chart_confusion(fig.add_axes([0.075, 0.07, 0.19, 0.23]), v0, f"E0 · Validation {v0['correct']}/133")
+    ax_r = fig.add_axes([0.285, 0.07, 0.19, 0.23])
     chart_confusion(ax_r, t3, f"E3 · 최종 Test {t3['correct']}/128")
     ax_r.set_yticks([])
-    ax_r.set_ylabel("")
     for a in fig.axes[-2:]:
-        a.set_xlabel("")  # 대시보드에서는 부제목에 행/열 설명 → ⑤ 제목과 겹침 방지
-    fig.axes[-2].set_ylabel("")
-    section(fig, 0.53, 0.375, "④", "응답 시간 (E3 서비스, Docker CPU)", "비동기는 '접수'가 빠를 뿐 결과는 더 늦다")
-    chart_latency(fig.add_axes([0.66, 0.225, 0.29, 0.125]))
+        a.set_xlabel("")
+        a.set_ylabel("")
+    section(fig, 0.53, 0.345, "④", "학습 곡선 (Epoch별 Validation)", "3 epoch 안에서 가장 높은 epoch의 모델을 저장")
+    chart_curves(fig.add_axes([0.59, 0.085, 0.36, 0.215]))
 
-    fig.add_artist(plt.Line2D([0.045, 0.955], [0.19, 0.19], color=GRID, linewidth=1))
-    # ⑤ 오류 분석
-    hv = hsv["class_stats_val"]
-    section(fig, 0.045, 0.172, "⑤", "남은 오답 분석 (Grad-CAM · OpenCV HSV)",
-            "E3는 잎을 보고도 녹병을 반점병으로 혼동 · 색 면적비만으로는 녹병과 정상을 구분하지 못함")
-    gc = Image.open(FIG / "gradcam" / "gradcam_test-wrong_bean_rust_test.28.png")
-    tiles = [gc.crop((0, 0, 224, 224)), gc.crop((690, 0, 914, 224)), gc.crop((230, 0, 454, 224))]
-    caps = ["원본 · 정답 녹병", "E0 근거 → healthy", "E3 근거 → 반점병"]
-    for i, (t, c) in enumerate(zip(tiles, caps)):
-        image_ax(fig, [0.045 + i * 0.118, 0.035, 0.11, 0.11], t, c)
-    tx = 0.42
-    lines = [("Grad-CAM", "E3 오답 7장: E3는 잎 위, 같은 사진에서 E0는 3장이 흙·배경 쪽 (오답만 관찰)"),
-             ("HSV 병반 면적비", f"Val 중앙값  반점병 {hv['angular_leaf_spot']['lesion_ratio_median']:.4f}  ·  "
-                                f"녹병 {hv['bean_rust']['lesion_ratio_median']:.4f}  ·  정상 {hv['healthy']['lesion_ratio_median']:.4f}"),
-             ("R1  healthy 의심", f"Val 보류 {r1v['flagged']}장 · 오답 {r1v['errors_caught']}/{r1v['errors_total']} 포착 → 기각"),
-             ("R2  점수 차 < 0.4", f"Val 보류 {r2v['flagged']}장 · 오답 {r2v['errors_caught']}/{r2v['errors_total']} 포착 → 근거 부족, 적용 보류")]
-    for i, (h, b) in enumerate(lines):
-        y = 0.135 - i * 0.027
-        fig.text(tx, y, h, fontsize=11.5, color=INK, fontweight="bold")
-        fig.text(tx + 0.13, y, b, fontsize=10.5, color=INK2)
-    fig.text(0.045, 0.012, "출처: reports/data/ eval_*.json · training_report_E*.json · timings.csv · hsv_rule_summary.json  ·  "
+    fig.text(0.045, 0.018, "출처: reports/data/ eval_*.json · training_report_E*.json  ·  "
              "모델은 Validation으로 선택, 최종 성능은 선택된 E3의 Test 결과", fontsize=9.5, color=MUTED)
     fig.savefig(FIG / "dashboard.png", facecolor=SURFACE)
     plt.close(fig)
 
+
+def service_board():
+    """② 서비스 검증 보드 — 실제 웹 화면·API 오류 처리·응답 시간·장애 테스트"""
+    W, H = 13, 17
+    fig = plt.figure(figsize=(W, H), dpi=150, facecolor=SURFACE)
+    fig.text(0.045, 0.965, "콩잎 분류 서비스 · 검증 한눈에 보기", fontsize=26, color=INK, fontweight="bold")
+    fig.text(0.045, 0.944, "FastAPI 동기 · Celery 비동기 · Redis 캐시/브로커 · PostgreSQL 작업 기록 · "
+             "Docker Compose 4서비스  ·  실제 실행 결과", fontsize=12, color=INK2)
+
+    lat = {k: m for k, _, m in latency()}
+    cut = (lat["동기 MISS"] - lat["동기 HIT"]) / lat["동기 MISS"] * 100
+    cw, ch, cy = 0.215, 0.085, 0.835
+    cards = [("검증 ·", "실환경 테스트", "27 / 27", "PASS · 모의 테스트 4 passed 별도"),
+             ("속도 ·", "캐시 HIT 응답", f"−{cut:.0f}%", f"동기 {lat['동기 MISS']:.1f} → {lat['동기 HIT']:.1f} ms (중앙값 5회)"),
+             ("응답 ·", "비동기 접수", f"{lat['비동기 접수 (MISS)']:.1f} ms",
+              f"job_id 먼저 반환 · 완료까지 {lat['비동기 완료 (MISS)']:.0f} ms"),
+             ("안정 ·", "장애 → 복구", "503 → done", "Redis 중지 시 failed 기록 · 복구 후 정상")]
+    for i, c in enumerate(cards):
+        card(fig, 0.045 + i * (cw + 0.0133), cy, cw, ch, *c)
+    fig.add_artist(plt.Line2D([0.045, 0.955], [0.818, 0.818], color=GRID, linewidth=1))
+
+    # ① 실제 웹 화면 (전체 폭)
+    section(fig, 0.045, 0.795, "①", "실제 웹 화면 (/vision/sync/ · /vision/async/)",
+            "같은 사진 두 번 → 두 번째는 캐시 HIT로 더 빠름 · 비동기는 job_id 접수 후 done")
+    shots = [("05_web_api/web_sync_miss.png", (35, 130, 700, 505), "동기 1회차 · 37 ms · cache_hit false (MISS)"),
+             ("05_web_api/web_sync_hit.png", (40, 130, 705, 505), "동기 2회차 · 10 ms · cache_hit true (HIT)"),
+             ("05_web_api/web_async_2_done.png", (45, 130, 710, 475), "비동기 · 접수 19 ms → 상태 done")]
+    for i, (p, box_, cap) in enumerate(shots):
+        img = Image.open(EVI / p).convert("RGB").crop(box_)
+        image_ax(fig, [0.045 + i * 0.3067, 0.6, 0.29, 0.15], img, cap)
+
+    fig.add_artist(plt.Line2D([0.045, 0.955], [0.56, 0.56], color=GRID, linewidth=1))
+    # ② 응답 시간
+    section(fig, 0.045, 0.537, "②", "응답 시간 (E3 모델, Docker CPU)", "비동기는 '접수'가 빠를 뿐 결과는 더 늦다")
+    chart_latency(fig.add_axes([0.16, 0.315, 0.30, 0.18]))
+    # ③ API 오류 처리
+    section(fig, 0.53, 0.537, "③", "API 입력 검증 · 오류 응답 (curl)",
+            "200 정상 · 400 이미지 아님 · 413 5MB 초과 · 404 없는 작업")
+    for i, (p, cap) in enumerate([("04_sync_api_01/api_sync_errors.png", "동기 API · 200 / 400 / 413"),
+                                  ("05_web_api/api_async_errors.png", "비동기 API · 404 / 400 / 413")]):
+        img = Image.open(EVI / p).convert("RGB")
+        image_ax(fig, [0.53, 0.405 - i * 0.107, 0.425, 0.085], img, cap)
+
+    fig.add_artist(plt.Line2D([0.045, 0.955], [0.285, 0.285], color=GRID, linewidth=1))
+    # ④ 장애·운영 테스트
+    section(fig, 0.045, 0.262, "④", "장애 · 운영 테스트", "일부러 멈추고 바꿔 보며 기록·복구 확인")
+    rows = [("worker 정지", "202 접수 · queued 유지 → worker 재시작 후 done (Redis 대기열 보존)"),
+            ("Redis 정지 · 동기", "200 · 캐시 없이 추론 (응답 8.06초 지연 → 개선안으로 제안)"),
+            ("Redis 정지 · 비동기", "503 · image_jobs에 failed와 오류 메시지 기록 (20.67초)"),
+            ("Redis 복구", "worker 자동 재연결 · 새 작업 done"),
+            ("모델 교체 E0 → E3", ".env 변경 → web·worker 재생성 · 응답·DB의 model_id 모두 E3"),
+            ("모의 테스트", "pytest 4 passed · 전체 흐름 · 브로커 오류 503 · 캐시 · worker 실패 기록")]
+    for i, (h, b) in enumerate(rows):
+        y = 0.218 - i * 0.031
+        tag = fig.add_axes([0.045, y - 0.006, 0.05, 0.022])
+        tag.axis("off")
+        tag.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.25",
+                                     transform=tag.transAxes, facecolor="#e3f4ea", edgecolor="none"))
+        tag.text(0.5, 0.5, "PASS", ha="center", va="center", fontsize=9.5, color="#0b7a3e",
+                 fontweight="bold", transform=tag.transAxes)
+        fig.text(0.11, y, h, fontsize=11.5, color=INK, fontweight="bold")
+        fig.text(0.29, y, b, fontsize=11, color=INK2)
+
+    fig.text(0.045, 0.014, "출처: reports/07_기능테스트_오류분석.md · reports/data/timings.csv · "
+             "reports/evidence/ (04_sync_api_01 · 05_web_api · 08_failure_test)  ·  웹 화면 3장은 서비스 모델 교체(E3) 전 E0로 촬영",
+             fontsize=9.5, color=MUTED)
+    fig.savefig(FIG / "service.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
+def pipeline():
+    """README 맨 위 한 줄 파이프라인"""
+    from matplotlib.patches import FancyArrowPatch
+    fig = plt.figure(figsize=(13, 3.6), dpi=150, facecolor="#ffffff")
+    bg = fig.add_axes([0, 0, 1, 1])
+    bg.axis("off")
+    bg.set_xlim(0, 1)
+    bg.set_ylim(0, 1)
+    bg.add_patch(FancyBboxPatch((0.01, 0.03), 0.98, 0.94, boxstyle="round,pad=0,rounding_size=0.03",
+                                facecolor="#f3f2ee", edgecolor="none"))
+    boxes = [("데이터", "콩잎 사진 1,295장", "3클래스 · 중복·누출 0", "#8a8984"),
+             ("① 모델 · ResNet-18", "Head-only → Full → +증강", "Val 0.767 → 0.993 · Test 0.953", EXP["E0"]),
+             ("② 서비스 · FastAPI", "동기 · 비동기 · 캐시 · DB", "캐시 −91% · 테스트 27/27", EXP["E2"]),
+             ("오답 분석", "Grad-CAM · OpenCV HSV", "녹병↔반점병 혼동 확인", EXP["E3"])]
+    bw, gap, x0, y0, bh = 0.2, 0.045, 0.04, 0.42, 0.45
+    centers = []
+    for i, (t, l1, l2, c) in enumerate(boxes):
+        x = x0 + i * (bw + gap)
+        bg.add_patch(FancyBboxPatch((x, y0), bw, bh, boxstyle="round,pad=0,rounding_size=0.015",
+                                    facecolor="#ffffff", edgecolor="#d9d8d3", linewidth=1))
+        bg.add_patch(FancyBboxPatch((x + 0.004, y0 + bh - 0.035), bw - 0.008, 0.03,
+                                    boxstyle="round,pad=0,rounding_size=0.006", facecolor=c, edgecolor="none"))
+        cx = x + bw / 2
+        centers.append(cx)
+        bg.text(cx, y0 + bh - 0.12, t, ha="center", fontsize=15, color=INK, fontweight="bold")
+        bg.text(cx, y0 + 0.17, l1, ha="center", fontsize=11, color=INK2)
+        bg.text(cx, y0 + 0.06, l2, ha="center", fontsize=11, color=c if c != "#8a8984" else INK2,
+                fontweight="bold" if c != "#8a8984" else "normal")
+        if i:
+            bg.add_patch(FancyArrowPatch((x - gap + 0.008, y0 + bh / 2), (x - 0.008, y0 + bh / 2),
+                                         arrowstyle="-|>", mutation_scale=16, color="#8a8984", linewidth=1.6))
+    # 되돌아가는 점선: 오답 분석 → 모델
+    green = EXP["E3"]
+    ya = 0.2
+    bg.plot([centers[3], centers[3]], [y0, ya], color=green, linestyle="--", linewidth=1.8)
+    bg.plot([centers[3], centers[1]], [ya, ya], color=green, linestyle="--", linewidth=1.8)
+    bg.add_patch(FancyArrowPatch((centers[1], ya), (centers[1], y0 - 0.01), arrowstyle="-|>",
+                                 mutation_scale=16, color=green, linewidth=1.8, linestyle="--"))
+    bg.text((centers[1] + centers[3]) / 2, ya - 0.08, "다음 개선 방향 · 고해상도 입력 · 질병 간 혼동 데이터 보강",
+            ha="center", fontsize=11.5, color=green, fontweight="bold")
+    fig.savefig(FIG / "pipeline.png", facecolor="#ffffff")
+    plt.close(fig)
 
 if __name__ == "__main__":
     FIG.mkdir(parents=True, exist_ok=True)
@@ -339,4 +414,6 @@ if __name__ == "__main__":
     fig.savefig(FIG / "confusion_E0_E3.png", facecolor=SURFACE, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     dashboard()
+    service_board()
+    pipeline()
     print("saved:", sorted(p.name for p in FIG.glob("*.png")))

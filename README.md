@@ -9,14 +9,28 @@
 콩잎 사진 1,295장으로 ResNet-18을 **반점병 · 녹병 · 정상** 3클래스로 Fine-tuning하고, 동기 API · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 작업 기록을 Docker Compose로 서비스했습니다.
 기준선의 원인을 진단해 **교재의 Full Fine-tuning 설정 → 증강 추가** 순서로 개선했고, 모델은 **Validation으로 고른 뒤 Test에 한 번** 평가했습니다.
 
+## 한눈에 보기
+
 <p align="center">
-  <img src="reports/figures/dashboard.png" alt="프로젝트 한눈에 보기" width="100%">
+  <img src="reports/figures/pipeline.png" alt="파이프라인" width="100%">
 </p>
 
-| | 모델 | 서비스 |
+| | ① 모델 | ② 서비스 |
 |---|---|---|
 | **한 일** | 데이터 점검 → Head-only 기준선 → Full Fine-tuning · 증강 실험 → Val 선택 → Test 1회 → 오답 분석 | 동기 API + Redis 캐시 · Celery 비동기 · PostgreSQL 기록 · 모델 교체 · 장애 테스트 |
 | **핵심 숫자** | Val **0.767 → 0.993** · 최종 Test **0.953** · 병든 잎 놓침 Val **11 → 1**, Test **0** | 캐시 HIT **−91%** · 비동기 접수 **9.1 ms** · 실환경 테스트 **27 / 27 PASS** |
+| **기록** | [산출물 1](reports/01_FineTuning_결과보고서.md) · [산출물 8](reports/08_최종기술보고서.md) | [산출물 2~7](#산출물) · [기능 테스트](reports/07_기능테스트_오류분석.md) |
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="middle"><img src="reports/figures/dashboard.png" alt="모델 결과 한눈에 보기"></td>
+    <td width="50%" align="center" valign="middle"><img src="reports/figures/service.png" alt="서비스 검증 한눈에 보기"></td>
+  </tr>
+  <tr>
+    <td align="center">① 모델 · 선택 · 최종 평가 · 오류 유형</td>
+    <td align="center">② 서비스 · 웹 화면 · 응답 시간 · API·장애 테스트</td>
+  </tr>
+</table>
 
 ### 실험 설정 — 무엇을 바꿨나
 
@@ -110,7 +124,7 @@ python scripts/hsv_rule_analysis.py && python scripts/make_figures.py
 ├── reports/
 │   ├── 01_*.md ~ 08_*.md  # 산출물
 │   ├── data/              # 원본 결과 (학습 리포트·평가·응답 시간·HSV)
-│   ├── figures/           # 대시보드·그래프·구성도·gradcam·hsv
+│   ├── figures/           # 파이프라인·모델/서비스 보드·그래프·구성도·gradcam·hsv
 │   └── evidence/          # 실행 캡처 00_env ~ 08_failure_test (단계별)
 └── artifacts/ · media/    # 모델·업로드 이미지 (Git 제외, 폴더만 유지)
 ```
