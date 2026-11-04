@@ -1,0 +1,41 @@
+{
+  "base_model": "microsoft/resnet-18",
+  "classes": [
+    "angular_leaf_spot",
+    "bean_rust",
+    "healthy"
+  ],
+  "train_count": 1034,
+  "val_count": 133,
+  "best_val_accuracy": 0.9924812030075187,
+  "history": [
+    {
+      "epoch": 1,
+      "loss": 0.4582,
+      "val_accuracy": 0.9699
+    },
+    {
+      "epoch": 2,
+      "loss": 0.1843,
+      "val_accuracy": 0.9774
+    },
+    {
+      "epoch": 3,
+      "loss": 0.1444,
+      "val_accuracy": 0.9925
+    }
+  ],
+  "experiment": {
+    "script": "training/finetune_aug.py (제공 finetune.py 재사용, 미수정)",
+    "augmentation_train_only": [
+      "RandomHorizontalFlip(p=0.5)",
+      "RandomRotation(±20°)",
+      "ColorJitter(brightness=0.2, contrast=0.2)",
+      "hue/saturation 미변경"
+    ],
+    "epochs": 3,
+    "batch_size": 8,
+    "lr": 5e-05,
+    "freeze_backbone": false
+  }
+}
