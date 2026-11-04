@@ -1,7 +1,7 @@
 # 산출물 3. API 명세서
 
 - Base URL: `http://127.0.0.1:8000` (Docker Compose `web`, 127.0.0.1에만 바인딩)
-- 문서: Swagger UI `/docs`, OpenAPI `/openapi.json` (`evidence/web_swagger_docs.png`)
+- 문서: Swagger UI `/docs`, OpenAPI `/openapi.json` (`evidence/05_web_api/web_swagger_docs.png`)
 - 응답 예시는 **모두 실제 응답**이다. 점수는 읽기 쉽게 소수 4자리로 반올림했고, 원문은 각 증빙 캡처에 있다.
 
 ## 1. 엔드포인트 목록
@@ -57,7 +57,7 @@
   "cache_hit": false
 }
 ```
-증빙: `evidence/model_switch_E3_api_db.png` (2990.65ms = cold start, 모델 로딩 포함)
+증빙: `evidence/05_web_api/model_switch_E3_api_db.png` (2990.65ms = cold start, 모델 로딩 포함)
 
 **성공 응답 — 같은 이미지 재요청 (캐시 HIT, `healthy_test.20.jpg`, E0 운영 시점)**
 
@@ -74,7 +74,7 @@
   "cache_hit": true
 }
 ```
-증빙: `evidence/redis_cache_miss_hit_ttl.png` (1회차 `cache_hit:false, inference_ms:33.59` → 2회차 HIT, Redis TTL 588초 확인)
+증빙: `evidence/07_infra/redis_cache_miss_hit_ttl.png` (1회차 `cache_hit:false, inference_ms:33.59` → 2회차 HIT, Redis TTL 588초 확인)
 
 **오류 응답**
 
@@ -84,7 +84,7 @@
 ```json
 {"detail": "5MB 이하 파일만 허용합니다."}
 ```
-증빙: `evidence/api_sync_errors.png` (`.txt` → 400, 6MB 랜덤 파일 → 413)
+증빙: `evidence/04_sync_api_01/api_sync_errors.png` (`.txt` → 400, 6MB 랜덤 파일 → 413)
 
 ## 4. API-03 비동기 작업 접수
 
@@ -99,15 +99,15 @@
 ```json
 {"job_id": 8, "status": "queued", "check_url": "/api/async/jobs/8/"}
 ```
-증빙: `evidence/model_switch_E3_api_db.png`, `evidence/api_async_202_done_db.png` (`HTTP/1.1 202 Accepted` 헤더)
+증빙: `evidence/05_web_api/model_switch_E3_api_db.png`, `evidence/05_web_api/api_async_202_done_db.png` (`HTTP/1.1 202 Accepted` 헤더)
 
 **오류 응답**
 
 | 입력 | 상태 | 응답 | 증빙 |
 |---|---:|---|---|
-| `.txt` 파일 | 400 | `{"detail":"올바른 이미지 파일이 아닙니다."}` | `evidence/api_async_errors.png` |
-| 6MB 랜덤 파일 | 413 | `{"detail":"5MB 이하 파일만 허용합니다."}` | `evidence/api_async_errors.png` |
-| Redis 중지 상태 | **503** | `{"detail":"작업 큐 등록 실패: Redis 연결을 확인하세요."}` (응답까지 20.67초) | `evidence/redis_down_async_503.png` |
+| `.txt` 파일 | 400 | `{"detail":"올바른 이미지 파일이 아닙니다."}` | `evidence/05_web_api/api_async_errors.png` |
+| 6MB 랜덤 파일 | 413 | `{"detail":"5MB 이하 파일만 허용합니다."}` | `evidence/05_web_api/api_async_errors.png` |
+| Redis 중지 상태 | **503** | `{"detail":"작업 큐 등록 실패: Redis 연결을 확인하세요."}` (응답까지 20.67초) | `evidence/08_failure_test/redis_down_async_503.png` |
 
 ## 5. API-04 작업 상태 조회
 
@@ -143,14 +143,14 @@
 {"job_id": 3, "status": "queued", "model_id": "artifacts/beans_resnet18",
  "top1": null, "all": null, "inference_ms": null, "cache_hit": null, "error_message": null}
 ```
-증빙: `evidence/async_worker_stopped_queued.png` → worker 재시작 후 `done` (`evidence/async_worker_restarted_done.png`)
+증빙: `evidence/07_infra/async_worker_stopped_queued.png` → worker 재시작 후 `done` (`evidence/07_infra/async_worker_restarted_done.png`)
 
 **오류 응답 (404)**
 
 ```json
 {"detail": "해당 작업이 없습니다."}
 ```
-증빙: `evidence/api_async_errors.png` (`/api/async/jobs/999999/`)
+증빙: `evidence/05_web_api/api_async_errors.png` (`/api/async/jobs/999999/`)
 
 ## 6. 실행 근거표
 

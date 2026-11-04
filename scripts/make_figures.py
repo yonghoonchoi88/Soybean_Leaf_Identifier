@@ -90,21 +90,22 @@ def latency():
 
 # ---------- 개별 차트 ----------
 def chart_val_test(ax):
+    """모델 선택은 Validation 으로만, Test 는 선택된 E3 만 1회"""
     style(ax)
-    x = range(len(EXP))
-    for i, e in enumerate(EXP):
-        v, t = ev["val"][e]["accuracy"], ev["test"][e]["accuracy"]
-        ax.bar(i - 0.18, v, 0.34, color=EXP[e], alpha=0.45, edgecolor=SURFACE, linewidth=2)
-        ax.bar(i + 0.18, t, 0.34, color=EXP[e], edgecolor=SURFACE, linewidth=2)
-        ax.text(i - 0.18, v + 0.012, f"{v:.3f}", ha="center", fontsize=10, color=INK2)
-        ax.text(i + 0.18, t + 0.012, f"{t:.3f}", ha="center", fontsize=11, color=INK, fontweight="bold")
-    ax.set_xticks(list(x), [EXP_NAME[e] for e in EXP], fontsize=11, color=INK)
-    ax.set_ylim(0.5, 1.06)
+    xs = [0, 1, 2]
+    for i, e in zip(xs, EXP):
+        v = ev["val"][e]["accuracy"]
+        ax.bar(i, v, 0.5, color=EXP[e], alpha=0.5, edgecolor=SURFACE, linewidth=2)
+        ax.text(i, v + 0.012, f"{v:.3f}", ha="center", fontsize=11, color=INK)
+    t = ev["test"]["E3"]["accuracy"]
+    ax.bar(3.2, t, 0.5, color=EXP["E3"], edgecolor=SURFACE, linewidth=2)
+    ax.text(3.2, t + 0.012, f"{t:.3f}", ha="center", fontsize=12, color=INK, fontweight="bold")
+    ax.axvline(2.6, color=GRID, linewidth=1.2, linestyle="--")
+    ax.text(1.0, 1.045, "모델 선택 · Validation", ha="center", fontsize=10.5, color=INK2)
+    ax.text(3.2, 1.045, "최종 · Test 1회", ha="center", fontsize=10.5, color=INK2)
+    ax.set_xticks(xs + [3.2], [EXP_NAME[e] for e in EXP] + ["E3 (선택 모델)"], fontsize=10.5, color=INK)
+    ax.set_ylim(0.5, 1.08)
     ax.set_ylabel("정확도", color=INK2)
-    from matplotlib.patches import Patch
-    ax.legend(handles=[Patch(color="#9a9993", alpha=0.45, label="Validation (선택에 사용)"),
-                       Patch(color="#5f5e5a", label="Test (1회 평가)")],
-              loc="upper left", frameon=False, fontsize=10)
 
 
 def chart_error_types(ax):
@@ -115,7 +116,7 @@ def chart_error_types(ax):
               ("질병 ↔ 질병 (병명 혼동)", "confuse")]
     ys = list(range(len(EXP)))[::-1]
     for y, e in zip(ys, EXP):
-        vals = error_types(ev["test"][e])
+        vals = error_types(ev["val"][e])
         left = 0
         for (lab, key), v in zip(labels, vals):
             if v:
@@ -125,8 +126,8 @@ def chart_error_types(ax):
             left += v
         ax.text(left + 0.6, y, f"총 {sum(vals)}", va="center", fontsize=11, color=INK)
     ax.set_yticks(ys, [EXP_NAME[e] for e in EXP], fontsize=11, color=INK)
-    ax.set_xlim(0, 42)
-    ax.set_xlabel("Test 오답 수 (128장 중)", color=INK2)
+    ax.set_xlim(0, 36)
+    ax.set_xlabel("Validation 오답 수 (133장 중)", color=INK2)
     from matplotlib.patches import Patch
     ax.legend(handles=[Patch(color=STATUS[k], label=l) for l, k in labels], loc="lower right",
               frameon=False, fontsize=9.5)
@@ -223,7 +224,7 @@ def image_ax(fig, rect, img, caption):
 def dashboard():
     W, H = 13, 19.5
     fig = plt.figure(figsize=(W, H), dpi=150, facecolor=SURFACE)
-    t3, t0 = ev["test"]["E3"], ev["test"]["E0"]
+    t3, v0, v3 = ev["test"]["E3"], ev["val"]["E0"], ev["val"]["E3"]
     fig.text(0.045, 0.972, "콩잎 질병 분류 · 프로젝트 한눈에 보기", fontsize=26, color=INK, fontweight="bold")
     fig.text(0.045, 0.956, f"ResNet-18 Fine-tuning  ·  콩잎 이미지 1,295장(학습 1,034 / 검증 133 / 테스트 128)  ·  "
              "3클래스  ·  FastAPI · Redis · Celery · PostgreSQL · Docker Compose",
@@ -238,30 +239,29 @@ def dashboard():
     for i, (stem, cap) in enumerate(heads):
         p = Image.open(FIG / "hsv" / f"hsv_test_{stem}.png")
         image_ax(fig, [0.045 + i * 0.158, 0.80, 0.148, 0.135], p.crop((0, 0, 256, 256)), cap)
-    shot = Image.open(EVI / "web_async_2_done.png")
+    shot = Image.open(EVI / "05_web_api" / "web_async_2_done.png")
     shot = shot.crop((0, 0, shot.width, int(shot.width * 0.62)))
     image_ax(fig, [0.53, 0.80, 0.425, 0.135], shot, "실제 서비스 화면 · 비동기 접수 → Celery 처리 → done")
 
     # 핵심 숫자 4개
-    base_acc, acc = t0["accuracy"], t3["accuracy"]
-    miss0, miss3 = error_types(t0)[0], error_types(t3)[0]
+    acc = t3["accuracy"]
+    miss0, miss3, miss_t = error_types(v0)[0], error_types(v3)[0], error_types(t3)[0]
     lat = {k: m for k, _, m in latency()}
     cut = (lat["동기 MISS"] - lat["동기 HIT"]) / lat["동기 MISS"] * 100
-    r2 = hsv["rules_test(apply once)"]["R2"]
+    r1v, r2v = hsv["rules_val(design)"]["R1"], hsv["rules_val(design)"]["R2"]
     cw, ch, cy = 0.215, 0.072, 0.705
-    cards = [("검증 ·", "Test 정확도", f"{acc:.3f}", f"기준선 {base_acc:.3f} → +{(acc - base_acc) * 100:.1f}%p · 1회 평가"),
-             ("안전 ·", "병든 잎 놓침", f"{miss0} → {miss3}", "질병을 healthy로 판정한 수 (Test)"),
-             ("속도 ·", "캐시 HIT 응답", f"−{cut:.0f}%", f"동기 {lat['동기 MISS']:.1f} → {lat['동기 HIT']:.1f} ms (중앙값 5회)"),
-             ("보조 ·", "확인 필요 규칙", f"오답 {r2['errors_total']} → {r2['errors_total'] - r2['errors_caught']}",
-              f"{r2['flag_rate'] * 100:.1f}%만 사람 확인 → 자동판정 {r2['auto_accuracy'] * 100:.1f}%")]
+    cards = [("최종 ·", "Test 정확도", f"{acc:.3f}", f"E3 · 모델 확정 후 1회 · 처음 보는 128장"),
+             ("선택 ·", "Validation 정확도", f"+{(v3['accuracy'] - v0['accuracy']) * 100:.1f}%p", f"{v0['accuracy']:.3f} → {v3['accuracy']:.3f} (Head-only → Full+증강)"),
+             ("안전 ·", "병든 잎 놓침", f"{miss0} → {miss3}", f"Validation 기준 · 최종 Test {miss_t}건"),
+             ("속도 ·", "캐시 HIT 응답", f"−{cut:.0f}%", f"동기 {lat['동기 MISS']:.1f} → {lat['동기 HIT']:.1f} ms (중앙값 5회)")]
     for i, c in enumerate(cards):
         card(fig, 0.045 + i * (cw + 0.0133), cy, cw, ch, *c)
     fig.add_artist(plt.Line2D([0.045, 0.955], [0.69, 0.69], color=GRID, linewidth=1))
 
     # ① 성능 변화 / ② 오류 유형
-    section(fig, 0.045, 0.672, "①", "성능 변화", "Backbone까지 학습하자 크게 상승 · 증강 효과는 Test에서 확정되지 않음")
+    section(fig, 0.045, 0.672, "①", "모델 선택 → 최종 평가", "Validation으로 E0·E2·E3를 비교해 E3 선택 → Test는 E3에만 1회")
     chart_val_test(fig.add_axes([0.07, 0.505, 0.39, 0.135]))
-    section(fig, 0.53, 0.672, "②", "오류 유형 (Test)", "가장 위험한 '병을 놓침'이 13 → 0")
+    section(fig, 0.53, 0.672, "②", "오류 유형 (Validation)", f"가장 위험한 '병을 놓침'이 {miss0} → {miss3}")
     chart_error_types(fig.add_axes([0.66, 0.505, 0.29, 0.135]))
 
     # 정직한 해석 박스
@@ -270,22 +270,22 @@ def dashboard():
     box.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.03",
                                  transform=box.transAxes, facecolor=CARD, edgecolor="none"))
     box.text(0.02, 0.78, "결과를 읽는 법", fontsize=14, color=INK, fontweight="bold", transform=box.transAxes)
-    notes = [("① Test < Validation", "확인됨",
-              f"Val은 epoch·모델 선택에 쓰여 낙관적 · E3 {ev['val']['E3']['accuracy']:.3f} → {acc:.3f}"),
-             ("② 증강 효과", "확정 안 함", f"Val +3장, Test는 E2와 동점 ({ev['test']['E2']['correct']}/128)"),
-             ("③ 작은 표본", "한계", "Test 128장 · 1장 = 0.78%p, 시드 1개 1회 실행")]
+    notes = [("① Test < Validation", "예상됨",
+              f"Val은 epoch·모델 선택에 쓰여 낙관적 · {v3['accuracy']:.3f} → {acc:.3f}"),
+             ("② 증강 효과", "확정 안 함", f"Val +{v3['correct'] - ev['val']['E2']['correct']}장(선택 규칙 충족) · 시드 1개 1회 실행"),
+             ("③ 작은 표본", "한계", "Val 1장 = 0.75%p · Test 1장 = 0.78%p")]
     for i, (h, tag, body) in enumerate(notes):
         x0 = 0.02 + i * 0.33
         box.text(x0, 0.45, h, fontsize=12, color=INK, fontweight="bold", transform=box.transAxes)
         box.text(x0 + 0.165, 0.45, tag, fontsize=10,
-                 color="#0ca30c" if tag == "확인됨" else MUTED, transform=box.transAxes)
+                 color="#0ca30c" if tag == "예상됨" else MUTED, transform=box.transAxes)
         box.text(x0, 0.15, body, fontsize=10.5, color=INK2, transform=box.transAxes)
 
     # ③ 혼동행렬 / ④ 응답시간
-    section(fig, 0.045, 0.375, "③", "혼동행렬 (Test)", "E0는 질병끼리 혼동 + healthy 쏠림 → E3는 녹병→반점병 5장만 남음")
-    chart_confusion(fig.add_axes([0.075, 0.21, 0.19, 0.125]), t0, f"E0 Head-only  ·  {t0['correct']}/128")
+    section(fig, 0.045, 0.375, "③", "혼동행렬", "E0(검증)는 질병끼리 혼동 + healthy 쏠림 → E3(최종 테스트)는 녹병→반점병만 남음")
+    chart_confusion(fig.add_axes([0.075, 0.21, 0.19, 0.125]), v0, f"E0 · Validation {v0['correct']}/133")
     ax_r = fig.add_axes([0.285, 0.21, 0.19, 0.125])
-    chart_confusion(ax_r, t3, f"E3 Full+증강  ·  {t3['correct']}/128")
+    chart_confusion(ax_r, t3, f"E3 · 최종 Test {t3['correct']}/128")
     ax_r.set_yticks([])
     ax_r.set_ylabel("")
     section(fig, 0.53, 0.375, "④", "응답 시간 (E3 서비스, Docker CPU)", "비동기는 '접수'가 빠를 뿐 결과는 더 늦다")
@@ -302,35 +302,34 @@ def dashboard():
     for i, (t, c) in enumerate(zip(tiles, caps)):
         image_ax(fig, [0.045 + i * 0.118, 0.035, 0.11, 0.11], t, c)
     tx = 0.42
-    lines = [("Grad-CAM", "오답 7장에서 E0는 흙·배경, E3는 잎 위에 주목하는 경향 (오답만 본 관찰)"),
+    lines = [("Grad-CAM", "E3 오답 7장: E3는 잎 위, 같은 사진에서 E0는 3장이 흙·배경 쪽 (오답만 관찰)"),
              ("HSV 병반 면적비", f"Val 중앙값  반점병 {hv['angular_leaf_spot']['lesion_ratio_median']:.4f}  ·  "
                                 f"녹병 {hv['bean_rust']['lesion_ratio_median']:.4f}  ·  정상 {hv['healthy']['lesion_ratio_median']:.4f}"),
-             ("R1  healthy 의심", f"Test 오답 포착 {hsv['rules_test(apply once)']['R1']['errors_caught']}건 · "
-                                f"정상 잎 {hsv['rules_test(apply once)']['R1']['flagged']}장 오경보 → 채택하지 않음"),
-             ("R2  점수 차 < 0.4", f"Test {r2['flagged']}장({r2['flag_rate'] * 100:.1f}%) 보류 → 오답 {r2['errors_caught']}/{r2['errors_total']} 포착"
-                                f" · 확신 오답 2장(0.95, 0.80)은 못 잡음")]
+             ("R1  healthy 의심", f"Val 보류 {r1v['flagged']}장 · 오답 {r1v['errors_caught']}/{r1v['errors_total']} 포착 → 기각"),
+             ("R2  점수 차 < 0.4", f"Val 보류 {r2v['flagged']}장 · 오답 {r2v['errors_caught']}/{r2v['errors_total']} 포착 → 근거 부족, 적용 보류")]
     for i, (h, b) in enumerate(lines):
         y = 0.135 - i * 0.027
         fig.text(tx, y, h, fontsize=11.5, color=INK, fontweight="bold")
         fig.text(tx + 0.13, y, b, fontsize=10.5, color=INK2)
     fig.text(0.045, 0.012, "출처: reports/data/ eval_*.json · training_report_E*.json · timings.csv · hsv_rule_summary.json  ·  "
-             "규칙 기준값은 Validation으로만 정하고 Test에 1회 적용", fontsize=9.5, color=MUTED)
+             "모델·규칙은 Validation으로만 선택, Test는 선택된 E3 성능 보고에만 사용", fontsize=9.5, color=MUTED)
     fig.savefig(FIG / "dashboard.png", facecolor=SURFACE)
     plt.close(fig)
 
 
 if __name__ == "__main__":
     FIG.mkdir(parents=True, exist_ok=True)
-    save_single("val_vs_test.png", chart_val_test, title="Validation vs Test 정확도",
-                note="Validation은 epoch·모델 선택에 사용, Test는 모델 확정 후 1회 평가")
-    save_single("error_types.png", chart_error_types, title="Test 오류 유형 (128장)")
+    save_single("val_vs_test.png", chart_val_test, title="모델 선택(Validation) → 최종 평가(Test 1회)",
+                note="E0·E2·E3는 Validation으로만 비교·선택, Test는 선택된 E3에 1회 적용")
+    save_single("error_types.png", chart_error_types, title="Validation 오류 유형 (133장)")
     save_single("latency.png", chart_latency, title="응답 시간 비교 (E3 서비스 · Docker CPU · 조건별 5회)",
                 note="비동기 완료 시간은 상태 조회 간격 0.1초 기준 (브라우저 화면은 1초 간격)")
     save_single("training_curves.png", chart_curves, title="Epoch별 Validation 정확도")
-    fig, axes = plt.subplots(1, 2, figsize=(8.5, 4.2), dpi=150, facecolor=SURFACE)
-    chart_confusion(axes[0], ev["test"]["E0"], f"E0 Head-only · {ev['test']['E0']['correct']}/128")
-    chart_confusion(axes[1], ev["test"]["E3"], f"E3 Full+증강 · {ev['test']['E3']['correct']}/128")
-    fig.suptitle("Test 혼동행렬 (빨간 숫자 = 병든 잎을 healthy로 놓침)", x=0.02, ha="left", fontsize=13, fontweight="bold")
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 4.3), dpi=150, facecolor=SURFACE)
+    chart_confusion(axes[0], ev["val"]["E0"], f"E0 · Validation {ev['val']['E0']['correct']}/133")
+    chart_confusion(axes[1], ev["val"]["E3"], f"E3 · Validation {ev['val']['E3']['correct']}/133")
+    chart_confusion(axes[2], ev["test"]["E3"], f"E3 · 최종 Test {ev['test']['E3']['correct']}/128")
+    fig.suptitle("혼동행렬 (빨간 숫자 = 병든 잎을 healthy로 놓침)", x=0.02, ha="left", fontsize=13, fontweight="bold")
     fig.tight_layout(rect=(0, 0, 1, 0.93))
     fig.savefig(FIG / "confusion_E0_E3.png", facecolor=SURFACE)
     plt.close(fig)
