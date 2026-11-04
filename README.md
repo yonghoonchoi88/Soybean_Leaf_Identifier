@@ -2,9 +2,12 @@
 
 # 콩잎 질병 분류 · Fine-tuning부터 동기·비동기 서빙까지
 
-**ResNet-18 · FastAPI · Redis · Celery · PostgreSQL · Docker Compose**
-
 </div>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11"> <img src="https://img.shields.io/badge/PyTorch-2.15%20train%20%7C%202.5.1%20serve-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch 2.15 train | 2.5.1 serve"> <img src="https://img.shields.io/badge/Transformers-ResNet--18-FFD21E?logo=huggingface&logoColor=black" alt="Transformers ResNet-18"> <img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white" alt="FastAPI 0.115+"> <img src="https://img.shields.io/badge/Celery-5.4%2B-37814A?logo=celery&logoColor=white" alt="Celery 5.4+"> <img src="https://img.shields.io/badge/Redis-7.4-DC382D?logo=redis&logoColor=white" alt="Redis 7.4"><br>
+  <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 17"> <img src="https://img.shields.io/badge/Docker%20Compose-4%20services-2496ED?logo=docker&logoColor=white" alt="Docker Compose 4 services"> <img src="https://img.shields.io/badge/OpenCV-HSV%20analysis-5C3EE8?logo=opencv&logoColor=white" alt="OpenCV HSV analysis"> <img src="https://img.shields.io/badge/NVIDIA-RTX%203060-76B900?logo=nvidia&logoColor=white" alt="NVIDIA RTX 3060"> <img src="https://img.shields.io/badge/Ubuntu-22.04%20WSL2-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04 WSL2">
+</p>
 
 콩잎 사진 1,295장으로 ResNet-18을 **반점병 · 녹병 · 정상** 3클래스로 Fine-tuning하고, 동기 API · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 작업 기록을 Docker Compose로 서비스했습니다.
 기준선의 원인을 진단해 **교재의 Full Fine-tuning 설정 → 증강 추가** 순서로 개선했고, 모델은 **Validation으로 고른 뒤 Test에 한 번** 평가했습니다.
@@ -64,7 +67,7 @@
 | 2 | [시스템 아키텍처](reports/02_시스템_아키텍처.md) | Docker Compose 4서비스 · Redis DB1/2/3 역할 |
 | 3 | [API 명세서](reports/03_API_명세서.md) | 6개 API · 실제 응답 JSON · 400/413/404/503 |
 | 4 | [DB 구조 · 작업이력](reports/04_DB_구조_작업이력.md) | DDL · 상태 전이 · job 1~21 (`failed` 포함) |
-| 5 | [AI 버튼 처리흐름](reports/05_AI버튼_처리흐름.md) | 동기·비동기 시퀀스도 · 코드 연결표 |
+| 5 | [AI 버튼 처리흐름](reports/05_AI버튼_처리흐름.md) | 동기·비동기 처리 흐름도 (파일·함수·줄 번호) · 코드 연결표 |
 | 6 | [성능 비교](reports/06_성능비교_보고서.md) | `timings.csv` · 캐시·비동기 해석 |
 | 7 | [기능 테스트 · 오류](reports/07_기능테스트_오류분석.md) | 실환경 27건 · 모의 2건 · 오류 12건 |
 | 8 | [**최종 기술 보고서**](reports/08_최종기술보고서.md) | 종합 · 개선 기술 ①~④ · 한계 · 개선 제안 |
