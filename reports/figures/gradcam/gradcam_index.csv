@@ -1,0 +1,8 @@
+source,image,true,pred,score,compare_pred,figure
+test-wrong,dataset/test/angular_leaf_spot/angular_leaf_spot_test.14.jpg,angular_leaf_spot,bean_rust,0.5707,bean_rust,gradcam_test-wrong_angular_leaf_spot_test.14.png
+test-wrong,dataset/test/bean_rust/bean_rust_test.15.jpg,bean_rust,angular_leaf_spot,0.9507,angular_leaf_spot,gradcam_test-wrong_bean_rust_test.15.png
+test-wrong,dataset/test/bean_rust/bean_rust_test.28.jpg,bean_rust,angular_leaf_spot,0.6353,healthy,gradcam_test-wrong_bean_rust_test.28.png
+test-wrong,dataset/test/bean_rust/bean_rust_test.3.jpg,bean_rust,angular_leaf_spot,0.5668,healthy,gradcam_test-wrong_bean_rust_test.3.png
+test-wrong,dataset/test/bean_rust/bean_rust_test.31.jpg,bean_rust,angular_leaf_spot,0.8048,angular_leaf_spot,gradcam_test-wrong_bean_rust_test.31.png
+test-wrong,dataset/test/bean_rust/bean_rust_test.36.jpg,bean_rust,angular_leaf_spot,0.5501,angular_leaf_spot,gradcam_test-wrong_bean_rust_test.36.png
+val-wrong,dataset/val/bean_rust/bean_rust_val.8.jpg,bean_rust,healthy,0.9497,bean_rust,gradcam_val-wrong_bean_rust_val.8.png
