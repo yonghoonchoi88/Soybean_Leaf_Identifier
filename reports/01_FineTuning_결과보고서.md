@@ -6,7 +6,7 @@
 | 기준 모델 | `microsoft/resnet-18` (ImageNet-1K 사전학습, Apache-2.0) |
 | 필수 실험 | **E0 Head-only Fine-tuning** (Backbone 고정, 분류 헤드만 학습) |
 | 선택 실험 | **E2 Full Fine-tuning**, **E3 Full Fine-tuning + 이미지 증강** |
-| 서비스 선택 모델 | **E3** `artifacts/beans_resnet18_full_aug/` (Validation 기준으로 사전에 정한 규칙에 따라 선택) |
+| 서비스 모델 | **E3** `artifacts/beans_resnet18_full_aug/` (Validation 기준으로 사전에 정한 규칙에 따라 선택) |
 | 학습 데이터 | `dataset/train` 1,034장 / 검증 `dataset/val` 133장 |
 | 최종 확인 데이터 | `dataset/test` 128장 (학습·모델 선택에 사용하지 않음, 모델 확정 후 1회 평가) |
 | 실행 일시 | 2026-11-04 |
@@ -23,7 +23,7 @@
 - 증강(E3)은 Validation에서 E2보다 3장 더 맞혔으나 **Test 정확도는 E2와 동일** → 증강의 정확도 향상 효과는 **확정하지 않음**
 - 모델 선택은 **Validation 결과만으로** 했으며, Test는 선택이 끝난 뒤 보고 목적으로만 1회 측정
 
-![세 실험 Validation 비교](evidence/experiments_val_compare.png)
+![Validation vs Test 정확도](figures/val_vs_test.png)
 
 ---
 
@@ -158,6 +158,8 @@ time python -u -m training.finetune_aug --data dataset --output artifacts/beans_
 
 ## 5. 학습 결과 (epoch별)
 
+![epoch별 Validation 정확도](figures/training_curves.png)
+
 | Epoch | E0 Loss | E0 Val | E2 Loss | E2 Val | E3 Loss | E3 Val |
 |---:|---:|---:|---:|---:|---:|---:|
 | 1 | 0.9924 | 0.6617 | 0.4406 | **0.9699** | 0.4582 | 0.9699 |
@@ -214,6 +216,8 @@ Test 측정 전에, 새로 작성한 평가 도구 `scripts/evaluate_split.py`�
 | **E3** | **0.9531** | 0.894 / 0.977 / 0.933 | 0.974 / 0.884 / 0.927 | **1.000 / 1.000 / 1.000** |
 
 ### 8-2. 혼동행렬 (행 = 정답, 열 = 예측)
+
+![Test 혼동행렬 E0 vs E3](figures/confusion_E0_E3.png)
 
 **E0 (Head-only)**
 
@@ -286,7 +290,25 @@ Test 측정 전에, 새로 작성한 평가 도구 `scripts/evaluate_split.py`�
 
 ### 11-2. E0 → E3 서비스 모델 교체 (02 단계, Docker Compose)
 
-> **[교체 후 기입]** `.env` `MODEL_PATH=artifacts/beans_resnet18_full_aug` → `docker compose up -d --force-recreate web worker` → 동기·비동기 응답의 `model_id` 확인
+| 단계 | 명령 / 확인 | 결과 |
+|---|---|---|
+| 1 | `.env`의 `MODEL_PATH`를 `artifacts/beans_resnet18_full_aug`로 변경 | `grep MODEL_PATH .env` |
+| 2 | `docker compose up -d --force-recreate web worker` | web·worker만 재생성 (redis·postgres는 3시간째 유지 → 데이터 보존) |
+| 3 | `docker compose exec web/worker printenv MODEL_PATH` | 두 컨테이너 모두 `artifacts/beans_resnet18_full_aug` |
+| 4 | 동기 요청 `bean_rust_val.0.jpg` | `model_id: artifacts/beans_resnet18_full_aug`, **bean_rust 0.9970**, `inference_ms 2990.65` (교체 직후 cold start) |
+| 5 | 같은 이미지 비동기 요청 → DB 조회 | job 8 `done`, `model_id` E3, `cache_hit=t` (web이 저장한 캐시를 worker가 재사용) |
+
+- DB `image_jobs`에 **job 7까지 E0, job 8부터 E3**로 기록되어 교체 시점이 남았다.
+- 캐시 키에 모델 경로 해시가 포함되어(`services.cache_key()`), E0 시절 캐시 결과가 E3 요청에 섞이지 않는다.
+- 증빙: `evidence/model_switch_E3_api_db.png`
+
+### 11-3. 오답 분석 (Grad-CAM · OpenCV HSV)
+
+E3의 오답 7장(Test 6, Val 1)을 별도 분석 도구로 확인했다. 정확도를 높이는 작업이 아니라 **원인 분석**이며, 결과와 개선 제안은 [산출물 8](08_최종기술보고서.md) 6장에 정리했다.
+
+- Grad-CAM (`scripts/gradcam.py`): E3는 오답 사진에서도 **잎 위**에 주목했고, 같은 사진에서 E0는 흙·배경에 주목하는 경우가 있었다 (오답 7장 관찰).
+- OpenCV HSV (`scripts/hsv_rule_analysis.py`): Validation 병반 후보 면적비 중앙값이 녹병 0.0067, 정상 0.0068로 거의 같아 **색 면적비만으로는 녹병과 정상을 구분하지 못했다.**
+- 그림: `figures/gradcam/gradcam_summary.png`, `figures/hsv/hsv_summary.png`
 
 ## 12. 결과 판정
 
@@ -294,6 +316,7 @@ Test 측정 전에, 새로 작성한 평가 도구 `scripts/evaluate_split.py`�
   - 필수: Head-only Fine-tuning 학습·저장·서비스 연결 (E0)
   - 선택: Full Fine-tuning(E2), Full Fine-tuning + 증강(E3) 실측 비교
   - 별도 평가 도구로 Validation 재현 확인 후 Test 1회 측정
+  - 서비스 모델을 E0 → E3로 교체하고 동기·비동기 응답과 DB 기록으로 확인
 - **한계**
   - 각 실험 1회 실행(시드 42), 결과의 변동 폭은 미확인
   - Test 128장은 1장이 0.78%p → 작은 차이는 우연일 수 있음
@@ -309,7 +332,8 @@ Test 측정 전에, 새로 작성한 평가 도구 `scripts/evaluate_split.py`�
 | 환경 | `evidence/env_versions.png`, `evidence/env_python_gpu.png` |
 | 데이터 | `evidence/data_source_original.png`, `data_mapping.png`, `data_odd_file_check.png`, `data_check_result.png` |
 | 학습 | `evidence/train_headonly_terminal.png`, `train_headonly_time.png`, `train_full_e3_terminal.png`, `train_full_aug_e3_terminal.png`, `experiments_val_compare.png`, `train_report_json.png`, `train_artifacts.png` |
+| 그림 | `figures/val_vs_test.png`, `training_curves.png`, `confusion_E0_E3.png`, `error_types.png` (`scripts/make_figures.py`가 `reports/data`에서 생성) |
 | 평가 | `evidence/eval_val_E0.png`, `eval_val_E2.png`, `eval_val_E3.png`, `eval_test_E0.png`, `eval_test_E2.png`, `eval_test_E3.png` |
 | 서비스 연결 | `evidence/api_sync_before_*.png`, `api_sync_after_*.png` |
 | 원본 데이터 | `reports/data/dataset_check.json`, `training_report_E*.json`, `eval_*.json`, `eval_*_predictions.csv` |
-| 추가 도구 | `scripts/check_dataset.py`, `scripts/evaluate_split.py`, `training/finetune_aug.py` (제공 코드 미수정) |
+| 추가 도구 | `scripts/check_dataset.py`, `scripts/evaluate_split.py`, `training/finetune_aug.py`, `scripts/gradcam.py`, `scripts/hsv_rule_analysis.py`, `scripts/make_figures.py` (제공 코드 미수정) |
