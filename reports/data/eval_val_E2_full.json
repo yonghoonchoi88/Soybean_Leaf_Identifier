@@ -1,0 +1,120 @@
+{
+  "created_at": "2026-11-04T15:21:39",
+  "model": "artifacts/beans_resnet18_full",
+  "split": "val",
+  "tag": "E2_full",
+  "device": "cpu",
+  "images": 133,
+  "correct": 129,
+  "accuracy": 0.9699,
+  "classes": [
+    "angular_leaf_spot",
+    "bean_rust",
+    "healthy"
+  ],
+  "confusion_matrix(row=true,col=pred)": {
+    "angular_leaf_spot": {
+      "angular_leaf_spot": 42,
+      "bean_rust": 1,
+      "healthy": 1
+    },
+    "bean_rust": {
+      "angular_leaf_spot": 0,
+      "bean_rust": 44,
+      "healthy": 1
+    },
+    "healthy": {
+      "angular_leaf_spot": 0,
+      "bean_rust": 1,
+      "healthy": 43
+    }
+  },
+  "per_class": {
+    "angular_leaf_spot": {
+      "support": 44,
+      "predicted": 42,
+      "precision": 1.0,
+      "recall": 0.9545,
+      "f1": 0.9767
+    },
+    "bean_rust": {
+      "support": 45,
+      "predicted": 46,
+      "precision": 0.9565,
+      "recall": 0.9778,
+      "f1": 0.967
+    },
+    "healthy": {
+      "support": 44,
+      "predicted": 45,
+      "precision": 0.9556,
+      "recall": 0.9773,
+      "f1": 0.9663
+    }
+  },
+  "margin_bins": [
+    {
+      "range": "0.0~0.1",
+      "count": 1,
+      "accuracy": 0.0
+    },
+    {
+      "range": "0.1~0.2",
+      "count": 6,
+      "accuracy": 0.8333
+    },
+    {
+      "range": "0.2~0.4",
+      "count": 1,
+      "accuracy": 0.0
+    },
+    {
+      "range": "0.4~1.0",
+      "count": 125,
+      "accuracy": 0.992
+    }
+  ],
+  "misclassified": [
+    {
+      "file": "angular_leaf_spot_val.18.jpg",
+      "true": "angular_leaf_spot",
+      "pred": "healthy",
+      "correct": false,
+      "top1_score": 0.6061,
+      "top2_label": "angular_leaf_spot",
+      "top2_score": 0.2427,
+      "margin": 0.3635
+    },
+    {
+      "file": "angular_leaf_spot_val.37.jpg",
+      "true": "angular_leaf_spot",
+      "pred": "bean_rust",
+      "correct": false,
+      "top1_score": 0.8421,
+      "top2_label": "angular_leaf_spot",
+      "top2_score": 0.1308,
+      "margin": 0.7113
+    },
+    {
+      "file": "bean_rust_val.5.jpg",
+      "true": "bean_rust",
+      "pred": "healthy",
+      "correct": false,
+      "top1_score": 0.3501,
+      "top2_label": "bean_rust",
+      "top2_score": 0.3332,
+      "margin": 0.0168
+    },
+    {
+      "file": "healthy_val.1.jpg",
+      "true": "healthy",
+      "pred": "bean_rust",
+      "correct": false,
+      "top1_score": 0.5521,
+      "top2_label": "healthy",
+      "top2_score": 0.4317,
+      "margin": 0.1204
+    }
+  ],
+  "elapsed_sec": 2.47
+}

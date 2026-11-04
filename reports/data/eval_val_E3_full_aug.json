@@ -1,0 +1,90 @@
+{
+  "created_at": "2026-11-04T15:14:41",
+  "model": "artifacts/beans_resnet18_full_aug",
+  "split": "val",
+  "tag": "E3_full_aug",
+  "device": "cpu",
+  "images": 133,
+  "correct": 132,
+  "accuracy": 0.9925,
+  "classes": [
+    "angular_leaf_spot",
+    "bean_rust",
+    "healthy"
+  ],
+  "confusion_matrix(row=true,col=pred)": {
+    "angular_leaf_spot": {
+      "angular_leaf_spot": 44,
+      "bean_rust": 0,
+      "healthy": 0
+    },
+    "bean_rust": {
+      "angular_leaf_spot": 0,
+      "bean_rust": 44,
+      "healthy": 1
+    },
+    "healthy": {
+      "angular_leaf_spot": 0,
+      "bean_rust": 0,
+      "healthy": 44
+    }
+  },
+  "per_class": {
+    "angular_leaf_spot": {
+      "support": 44,
+      "predicted": 44,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "bean_rust": {
+      "support": 45,
+      "predicted": 44,
+      "precision": 1.0,
+      "recall": 0.9778,
+      "f1": 0.9888
+    },
+    "healthy": {
+      "support": 44,
+      "predicted": 45,
+      "precision": 0.9778,
+      "recall": 1.0,
+      "f1": 0.9888
+    }
+  },
+  "margin_bins": [
+    {
+      "range": "0.0~0.1",
+      "count": 0,
+      "accuracy": null
+    },
+    {
+      "range": "0.1~0.2",
+      "count": 2,
+      "accuracy": 1.0
+    },
+    {
+      "range": "0.2~0.4",
+      "count": 2,
+      "accuracy": 1.0
+    },
+    {
+      "range": "0.4~1.0",
+      "count": 129,
+      "accuracy": 0.9922
+    }
+  ],
+  "misclassified": [
+    {
+      "file": "bean_rust_val.8.jpg",
+      "true": "bean_rust",
+      "pred": "healthy",
+      "correct": false,
+      "top1_score": 0.9497,
+      "top2_label": "bean_rust",
+      "top2_score": 0.05,
+      "margin": 0.8998
+    }
+  ],
+  "elapsed_sec": 2.52
+}
