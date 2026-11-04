@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-11-04T15:36:13",
+  "base": "http://127.0.0.1:8000",
+  "repeat": 5,
+  "poll_sec": 0.1,
+  "model_id": "artifacts/beans_resnet18_full_aug",
+  "summary": [
+    {
+      "path": "sync",
+      "cache_status": "MISS",
+      "n": 5,
+      "http_ms_median": 21.09,
+      "final_ms_median": 21.09,
+      "inference_ms_median": 16.18
+    },
+    {
+      "path": "sync",
+      "cache_status": "HIT",
+      "n": 5,
+      "http_ms_median": 1.84,
+      "final_ms_median": 1.84,
+      "inference_ms_median": null
+    },
+    {
+      "path": "async",
+      "cache_status": "MISS",
+      "n": 5,
+      "http_ms_median": 9.12,
+      "final_ms_median": 116.35,
+      "inference_ms_median": 20.34
+    },
+    {
+      "path": "async",
+      "cache_status": "HIT",
+      "n": 5,
+      "http_ms_median": 10.11,
+      "final_ms_median": 127.64,
+      "inference_ms_median": null
+    }
+  ]
+}
