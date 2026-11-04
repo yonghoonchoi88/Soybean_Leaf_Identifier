@@ -18,3 +18,7 @@ media/jobs/*
 
 # 기타
 *.db
+
+# Windows 다운로드 꼬리표 파일 (WSL로 복사 시 생성됨)
+*:Zone.Identifier
+*Zone.Identifier
