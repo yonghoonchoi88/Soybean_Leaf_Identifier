@@ -58,6 +58,8 @@ sed -i 's#^MODEL_PATH=.*#MODEL_PATH=artifacts/beans_resnet18_full_aug#' .env
 mkdir -p artifacts media/jobs
 docker compose up -d --build
 curl -s http://127.0.0.1:8000/health ; echo             # 화면: /vision/sync/ · /vision/async/ · /docs
+# 확인: /health → {"status":"ok"} · 동기 → top1·cache_hit · 비동기 → 202·job_id → done · DB image_jobs 행
+# 가이드 기본 경로(E0)로 전환: sed -i 's#^MODEL_PATH=.*#MODEL_PATH=artifacts/beans_resnet18#' .env && docker compose up -d --force-recreate web worker
 docker compose stop                                      # 정지 (down -v 는 DB·캐시를 지우므로 사용 안 함)
 
 # 5. 테스트 · 분석

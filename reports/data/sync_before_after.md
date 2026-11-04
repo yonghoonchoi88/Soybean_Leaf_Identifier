@@ -16,4 +16,4 @@
 | 학습 모델 | 2419.73 | 23.76 / 21.74 |
 
 - 주의: 3장 결과는 서비스 연결 시연이며 정확도 지표 아님 (모델 성능 근거는 Val Acc 0.7669)
-- 증빙: evidence/api_sync_before_*.png, evidence/api_sync_after_*.png
+- 증빙: evidence/04_sync_api_01/api_sync_before_*.png, evidence/04_sync_api_01/api_sync_after_*.png
