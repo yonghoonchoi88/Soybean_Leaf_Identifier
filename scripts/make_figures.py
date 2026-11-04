@@ -31,6 +31,7 @@ SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8a8984", "#
 CARD = "#f3f2ee"
 EXP = {"E0": "#2a78d6", "E2": "#eb6834", "E3": "#1baf7a"}          # 실험 = 범주색 1~3번 고정
 EXP_NAME = {"E0": "E0 Head-only", "E2": "E2 Full", "E3": "E3 Full+증강"}
+EXP_DESC = {"E0": "헤드만 학습", "E2": "전체 층 · lr↓", "E3": "+ 반전·회전·밝기"}
 STATUS = {"miss": "#d03b3b", "false_alarm": "#fab219", "confuse": "#a8a7a1"}
 TAGS = {"E0": "E0_headonly", "E2": "E2_full", "E3": "E3_full_aug"}
 CLASSES = ["angular_leaf_spot", "bean_rust", "healthy"]
@@ -103,7 +104,8 @@ def chart_val_test(ax):
     ax.axvline(2.6, color=GRID, linewidth=1.2, linestyle="--")
     ax.text(1.0, 1.045, "모델 선택 · Validation", ha="center", fontsize=10.5, color=INK2)
     ax.text(3.2, 1.045, "최종 · Test 1회", ha="center", fontsize=10.5, color=INK2)
-    ax.set_xticks(xs + [3.2], [EXP_NAME[e] for e in EXP] + ["E3 (선택 모델)"], fontsize=10.5, color=INK)
+    ax.set_xticks(xs + [3.2], [f"{EXP_NAME[e]}\n{EXP_DESC[e]}" for e in EXP] + ["E3 (선택 모델)\n처음 보는 128장"],
+                  fontsize=10.5, color=INK)
     ax.set_ylim(0.5, 1.08)
     ax.set_ylabel("정확도", color=INK2)
 
@@ -145,7 +147,7 @@ def chart_confusion(ax, report, title):
     ax.set_xticks(range(3), [SHORT[c] for c in CLASSES], fontsize=9, color=INK2)
     ax.set_yticks(range(3), [SHORT[c] for c in CLASSES], fontsize=9, color=INK2)
     ax.set_xlabel("예측", color=INK2)
-    ax.set_ylabel("정답", color=INK2)
+    ax.set_ylabel("정답", color=INK2, rotation=0, ha="right", va="center", labelpad=6)
     ax.set_title(title, fontsize=12, color=INK, pad=8)
     for s in ax.spines.values():
         s.set_visible(False)
@@ -259,21 +261,21 @@ def dashboard():
     fig.add_artist(plt.Line2D([0.045, 0.955], [0.69, 0.69], color=GRID, linewidth=1))
 
     # ① 성능 변화 / ② 오류 유형
-    section(fig, 0.045, 0.672, "①", "모델 선택 → 최종 평가", "Validation으로 E0·E2·E3를 비교해 E3 선택 → Test는 E3에만 1회")
+    section(fig, 0.045, 0.672, "①", "모델 선택 → 최종 평가", "E0→E2: Backbone까지 학습(lr 0.00005) · E2→E3: Train 증강 추가 → Val로 E3 선택")
     chart_val_test(fig.add_axes([0.07, 0.505, 0.39, 0.135]))
     section(fig, 0.53, 0.672, "②", "오류 유형 (Validation)", f"가장 위험한 '병을 놓침'이 {miss0} → {miss3}")
     chart_error_types(fig.add_axes([0.66, 0.505, 0.29, 0.135]))
 
-    # 정직한 해석 박스
+    # 해석 박스
     box = fig.add_axes([0.045, 0.40, 0.91, 0.075])
     box.axis("off")
     box.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.03",
                                  transform=box.transAxes, facecolor=CARD, edgecolor="none"))
     box.text(0.02, 0.78, "결과를 읽는 법", fontsize=14, color=INK, fontweight="bold", transform=box.transAxes)
-    notes = [("① Test < Validation", "예상됨",
+    notes = [("가. Test < Validation", "예상됨",
               f"Val은 epoch·모델 선택에 쓰여 낙관적 · {v3['accuracy']:.3f} → {acc:.3f}"),
-             ("② 증강 효과", "확정 안 함", f"Val +{v3['correct'] - ev['val']['E2']['correct']}장(선택 규칙 충족) · 시드 1개 1회 실행"),
-             ("③ 작은 표본", "한계", "Val 1장 = 0.75%p · Test 1장 = 0.78%p")]
+             ("나. 증강 효과", "확정 안 함", f"Val +{v3['correct'] - ev['val']['E2']['correct']}장(선택 규칙 충족) · 시드 1개 1회 실행"),
+             ("다. 작은 표본", "한계", "Val 1장 = 0.75%p · Test 1장 = 0.78%p")]
     for i, (h, tag, body) in enumerate(notes):
         x0 = 0.02 + i * 0.33
         box.text(x0, 0.45, h, fontsize=12, color=INK, fontweight="bold", transform=box.transAxes)
@@ -282,12 +284,15 @@ def dashboard():
         box.text(x0, 0.15, body, fontsize=10.5, color=INK2, transform=box.transAxes)
 
     # ③ 혼동행렬 / ④ 응답시간
-    section(fig, 0.045, 0.375, "③", "혼동행렬", "E0(검증)는 질병끼리 혼동 + healthy 쏠림 → E3(최종 테스트)는 녹병→반점병만 남음")
+    section(fig, 0.045, 0.375, "③", "혼동행렬", "행=정답·열=예측 · E0: 질병 혼동+정상으로 놓침 → E3: 주로 녹병→반점병")
     chart_confusion(fig.add_axes([0.075, 0.21, 0.19, 0.125]), v0, f"E0 · Validation {v0['correct']}/133")
     ax_r = fig.add_axes([0.285, 0.21, 0.19, 0.125])
     chart_confusion(ax_r, t3, f"E3 · 최종 Test {t3['correct']}/128")
     ax_r.set_yticks([])
     ax_r.set_ylabel("")
+    for a in fig.axes[-2:]:
+        a.set_xlabel("")  # 대시보드에서는 부제목에 행/열 설명 → ⑤ 제목과 겹침 방지
+    fig.axes[-2].set_ylabel("")
     section(fig, 0.53, 0.375, "④", "응답 시간 (E3 서비스, Docker CPU)", "비동기는 '접수'가 빠를 뿐 결과는 더 늦다")
     chart_latency(fig.add_axes([0.66, 0.225, 0.29, 0.125]))
 
@@ -312,7 +317,7 @@ def dashboard():
         fig.text(tx, y, h, fontsize=11.5, color=INK, fontweight="bold")
         fig.text(tx + 0.13, y, b, fontsize=10.5, color=INK2)
     fig.text(0.045, 0.012, "출처: reports/data/ eval_*.json · training_report_E*.json · timings.csv · hsv_rule_summary.json  ·  "
-             "모델·규칙은 Validation으로만 선택, Test는 선택된 E3 성능 보고에만 사용", fontsize=9.5, color=MUTED)
+             "모델은 Validation으로 선택, 최종 성능은 선택된 E3의 Test 결과", fontsize=9.5, color=MUTED)
     fig.savefig(FIG / "dashboard.png", facecolor=SURFACE)
     plt.close(fig)
 
@@ -320,7 +325,7 @@ def dashboard():
 if __name__ == "__main__":
     FIG.mkdir(parents=True, exist_ok=True)
     save_single("val_vs_test.png", chart_val_test, title="모델 선택(Validation) → 최종 평가(Test 1회)",
-                note="E0·E2·E3는 Validation으로만 비교·선택, Test는 선택된 E3에 1회 적용")
+                note="E0·E2·E3는 Validation으로 비교·선택, 최종 평가는 선택된 E3")
     save_single("error_types.png", chart_error_types, title="Validation 오류 유형 (133장)")
     save_single("latency.png", chart_latency, title="응답 시간 비교 (E3 서비스 · Docker CPU · 조건별 5회)",
                 note="비동기 완료 시간은 상태 조회 간격 0.1초 기준 (브라우저 화면은 1초 간격)")
@@ -331,7 +336,7 @@ if __name__ == "__main__":
     chart_confusion(axes[2], ev["test"]["E3"], f"E3 · 최종 Test {ev['test']['E3']['correct']}/128")
     fig.suptitle("혼동행렬 (빨간 숫자 = 병든 잎을 healthy로 놓침)", x=0.02, ha="left", fontsize=13, fontweight="bold")
     fig.tight_layout(rect=(0, 0, 1, 0.93))
-    fig.savefig(FIG / "confusion_E0_E3.png", facecolor=SURFACE)
+    fig.savefig(FIG / "confusion_E0_E3.png", facecolor=SURFACE, bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     dashboard()
     print("saved:", sorted(p.name for p in FIG.glob("*.png")))

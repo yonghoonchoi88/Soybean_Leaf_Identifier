@@ -7,7 +7,7 @@
 </div>
 
 콩잎 사진 1,295장으로 ResNet-18을 **반점병 · 녹병 · 정상** 3클래스로 Fine-tuning하고, 동기 API · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 작업 기록을 Docker Compose로 서비스했습니다.
-기준선의 원인을 진단해 **한 번에 한 조건만 바꿔** 개선했고, 모델은 **Validation으로 고른 뒤 Test에 한 번** 평가했습니다.
+기준선의 원인을 진단해 **교재의 Full Fine-tuning 설정 → 증강 추가** 순서로 개선했고, 모델은 **Validation으로 고른 뒤 Test에 한 번** 평가했습니다.
 
 <p align="center">
   <img src="reports/figures/dashboard.png" alt="프로젝트 한눈에 보기" width="100%">
@@ -17,7 +17,18 @@
 |---|---|---|
 | **한 일** | 데이터 점검 → Head-only 기준선 → Full Fine-tuning · 증강 실험 → Val 선택 → Test 1회 → 오답 분석 | 동기 API + Redis 캐시 · Celery 비동기 · PostgreSQL 기록 · 모델 교체 · 장애 테스트 |
 | **핵심 숫자** | Val **0.767 → 0.993** · 최종 Test **0.953** · 병든 잎 놓침 Val **11 → 1**, Test **0** | 캐시 HIT **−91%** · 비동기 접수 **9.1 ms** · 실환경 테스트 **27 / 27 PASS** |
-| **정직하게 남긴 것** | 증강 효과 크기는 미확정 · 색 규칙은 기각 · [Test 사용 이력 공개](reports/01_FineTuning_결과보고서.md#부록-test-사용-이력-원칙-점검) | Redis 장애 시 응답 8초·20초 지연 → 개선안으로 이관 |
+
+### 실험 설정 — 무엇을 바꿨나
+
+| 실험 | 바꾼 것 | 학습되는 부분 | 학습률 | Train 증강 | Validation |
+|---|---|---|---:|---|---:|
+| **E0** Head-only (필수) | 제공 명령 그대로 (`--freeze-backbone`) | 마지막 분류 헤드만 (1,539개) | 0.0002 | 없음 | 0.767 |
+| **E2** Full Fine-tuning | 동결 해제 + 학습률 ¼ (가이드 6-1 B 설정) | **Backbone 포함 전체** (약 1,118만 개) | 0.00005 | 없음 | 0.970 |
+| **E3** Full + 증강 ⭐ | E2에 **Train 증강만** 추가 | 전체 | 0.00005 | 좌우 반전(50%) · 회전 ±20° · 밝기·대비 ±20% | **0.993** |
+
+- **Full Fine-tuning:** E0는 ImageNet에서 배운 "눈"(Backbone)을 고정하고 마지막 층만 학습했다. E2는 Backbone까지 콩잎 병반에 맞게 다시 학습하고, 사전학습 특징이 망가지지 않도록 학습률을 낮췄다.
+- **증강:** 학습할 때마다 Train 사진을 무작위로 뒤집고·돌리고·밝기를 바꿔 촬영 방향·조명 차이에 강하게 만든다. 녹병(적갈색)과 반점병(황갈색)은 색이 단서라 **색조·채도는 바꾸지 않았다.** Validation·Test에는 적용하지 않는다.
+- 공통: epochs 3 · batch 8 · 같은 Train/Validation · `training/finetune.py` 미수정 (E3는 래퍼 `training/finetune_aug.py`)
 
 ## 산출물
 
