@@ -1,3 +1,5 @@
+**한국어** | [English](README.en.md)
+
 <div align="center">
 
 # 콩잎 질병 분류 · Fine-tuning부터 동기·비동기 서빙까지
@@ -123,7 +125,7 @@ python scripts/hsv_rule_analysis.py && python scripts/make_figures.py
 | `scripts/measure_timings.py` | 동기/비동기 × MISS/HIT 반복 측정, 워밍업 분리 |
 | `scripts/gradcam.py` | 오답 사진 Grad-CAM, 모델 간 비교 |
 | `scripts/hsv_rule_analysis.py` | OpenCV HSV 병반 후보 분석 + 보조 규칙 시뮬레이션 |
-| `scripts/make_figures.py` | `reports/data` 원본만 읽어 대시보드·그래프 생성 |
+| `scripts/make_figures.py` | `reports/data` 원본만 읽어 대시보드·그래프 생성 (한글 + 영문 `.en`) |
 
 </details>
 
@@ -140,7 +142,7 @@ python scripts/hsv_rule_analysis.py && python scripts/make_figures.py
 ├── reports/
 │   ├── 01_*.md ~ 08_*.md  # 산출물
 │   ├── data/              # 원본 결과 (학습 리포트·평가·응답 시간·HSV)
-│   ├── figures/           # 파이프라인·모델/서비스 보드·그래프·구성도·gradcam·hsv
+│   ├── figures/           # 파이프라인·모델/서비스 보드(*.en.png = 영문)·그래프·구성도·gradcam·hsv
 │   └── evidence/          # 실행 캡처 00_env ~ 08_failure_test (단계별)
 └── artifacts/ · media/    # 모델·업로드 이미지 (Git 제외, 폴더만 유지)
 ```
