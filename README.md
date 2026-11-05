@@ -152,7 +152,11 @@ python scripts/hsv_rule_analysis.py && python scripts/make_figures.py
 
 - **환경:** WSL2 Ubuntu 22.04.5 · Python 3.11.16 · transformers 4.57.6 · RTX 3060(학습) · Docker 29.9.2 / Compose v5.6.1 · 컨테이너 추론 CPU
 - **보안:** `.env` · `dataset/` · `artifacts/` · `media/jobs/`는 Git 제외. `compose.yaml`의 DB 비밀번호는 교재 제공 로컬 실습값(포트는 `127.0.0.1`에만 바인딩) → 운영 시 `.env` 분리 권장
-- **한계:** 단일 출처 데이터 · 실험당 1회 실행 · 동시 부하 미측정 · 학습 범위 밖 입력도 3클래스 중 하나로 분류
+- **한계:**
+  1. Test 오답 6장이 모두 녹병 ↔ 반점병 혼동 (녹병 Recall 0.88) → [09 보고서](reports/09_성능분석_개선보고서.md)
+  2. 단일 출처 데이터 — 인터넷 콩잎 사진은 bean_rust 0.414 vs healthy 0.410으로 사실상 판단 불가, 콩잎이 아닌 사진도 3클래스 중 하나로 분류
+  3. 실험당 1회(seed 42) — E2 → E3 차이가 Val 3장이라 증강 효과는 확정하지 않음
+  4. Redis 정지 시 동기 200까지 8.06초, 비동기 503까지 20.67초 지연 · 동시 부하 미측정
 - **출처:** 데이터 [AI-Lab-Makerere/beans](https://huggingface.co/datasets/AI-Lab-Makerere/beans) · 모델 [microsoft/resnet-18](https://huggingface.co/microsoft/resnet-18)
 
 </details>
