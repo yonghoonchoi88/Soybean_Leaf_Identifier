@@ -11,6 +11,8 @@
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 17"> <img src="https://img.shields.io/badge/Docker%20Compose-4%20services-2496ED?logo=docker&logoColor=white" alt="Docker Compose 4 services"> <img src="https://img.shields.io/badge/OpenCV-HSV%20analysis-5C3EE8?logo=opencv&logoColor=white" alt="OpenCV HSV analysis"> <img src="https://img.shields.io/badge/NVIDIA-RTX%203060-76B900?logo=nvidia&logoColor=white" alt="NVIDIA RTX 3060"> <img src="https://img.shields.io/badge/Ubuntu-22.04%20WSL2-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04 WSL2">
 </p>
 
+<p align="center"><a href="https://www.figma.com/design/8mR9Tlh6hyFZhOcblq2dWG/Soybean_Leaf_Identifier"><img src="https://img.shields.io/badge/Figma-%EA%B8%B0%EC%88%A0%20%EB%AC%B8%EC%84%9C-F24E1E?logo=figma&logoColor=white" alt="Figma 기술 문서"></a></p>
+
 콩잎 사진 1,295장으로 ResNet-18을 **반점병 · 녹병 · 정상** 3클래스 분류기로 Fine-tuning하고, 동기 API · Redis 캐시 · Celery 비동기 작업 · PostgreSQL 작업 기록을 Docker Compose 4개 서비스로 배포했습니다.
 기준선이 낮은 원인을 진단해 **Backbone 동결 해제 → Train 증강** 순서로 Validation 정확도를 **0.767 → 0.993**까지 올렸고, 선택한 모델은 한 번도 쓰지 않은 Test에서 **한 번만** 평가했습니다(**0.953**).
 
