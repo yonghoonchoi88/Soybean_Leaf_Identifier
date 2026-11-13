@@ -9,6 +9,8 @@
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 17"> <img src="https://img.shields.io/badge/Docker%20Compose-4%20services-2496ED?logo=docker&logoColor=white" alt="Docker Compose 4 services"> <img src="https://img.shields.io/badge/OpenCV-HSV%20analysis-5C3EE8?logo=opencv&logoColor=white" alt="OpenCV HSV analysis"> <img src="https://img.shields.io/badge/NVIDIA-RTX%203060-76B900?logo=nvidia&logoColor=white" alt="NVIDIA RTX 3060"> <img src="https://img.shields.io/badge/Ubuntu-22.04%20WSL2-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 22.04 WSL2">
 </p>
 
+<p align="center"><a href="https://www.figma.com/design/8mR9Tlh6hyFZhOcblq2dWG/Soybean_Leaf_Identifier"><img src="https://img.shields.io/badge/Figma-Technical%20Docs-F24E1E?logo=figma&logoColor=white" alt="Technical docs on Figma"></a></p>
+
 [한국어](README.md) | **English**
 
 I fine-tuned ResNet-18 on 1,295 soybean leaf photos into a 3-class classifier (**angular leaf spot · bean rust · healthy**) and deployed it as four Docker Compose services: a sync API, a Redis cache, Celery async jobs, and PostgreSQL job records.
